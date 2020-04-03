@@ -49,8 +49,7 @@ export class HomePage {
   }
  
   getAddressFromCoords(lattitude, longitude) {
-    console.log("Coordenadas: "+lattitude+" "+longitude);
-
+    
     let options: NativeGeocoderOptions = {
       useLocale: true,
       maxResults: 5
@@ -58,7 +57,15 @@ export class HomePage {
  
     this.nativeGeocoder.reverseGeocode(lattitude, longitude, options)
       .then((result: NativeGeocoderResult[]) => {
-        this.address = "";
+        var info = result[0];
+        var headers = ["countryName", "administrativeArea","locality","thoroughfare"];
+        var data = "";
+
+        headers.map((header)=> data += info[header]+" ");
+        this.address = data;
+
+        /*
+        
         let responseAddress = [];
         for (let [key, value] of Object.entries(result[0])) {
           if(value.length>0)
@@ -69,11 +76,11 @@ export class HomePage {
         for (let value of responseAddress) {
           this.address += value+", ";
         }
-        this.address = this.address.slice(0, -2);
+        this.address = this.address.slice(0, -2);*/
       })
       .catch((error: any) =>{ 
         console.log("Error: " +error);
-        this.address = "Address Not Available!";
+        this.address += error;
       });
  
   }
