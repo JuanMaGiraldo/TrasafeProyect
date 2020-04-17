@@ -29,7 +29,6 @@ export class HomePage {
   userZone: string;
   actualUbication: any;
   mapOptions: any;
-
   private options: NativeGeocoderOptions = {
     useLocale: true,
     maxResults: 5
@@ -43,20 +42,19 @@ export class HomePage {
     private firebasService: FirebaseServiceService
 
     ) {
-
+    this.mapOptions = {      
+      zoom: 17,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    }
     this.isSharingLocation = false;
     this.lastAlert = null;
     this.lastSafe = null;
     this.dontAskAgain = false;
     this.srcIndicator = "";
     this.actualUbication = null;
-    this.mapOptions = {
-      zoom: 17,
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      mapTypeControl: false,
-      streeViewControl: false,
-      fullScreenControl: false
-    }
   }
   
  
@@ -65,18 +63,12 @@ export class HomePage {
   }
  
   loadMap() {
-    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
-
-       
-  }
-
-  getActualPosition(){
-    this.geolocation.getCurrentPosition().then((resp) => {     
-
-      let latLng = new google.maps.LatLng(resp.coords.latitude, resp.coords.longitude);
+    this.geolocation.getCurrentPosition().then((resp) => {
+      let latLng = new google.maps.LatLng(resp.coords.latitude, resp.coords.longitude);     
+      
+      this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
       this.map.setCenter(latLng);
       this.map.setZoom(17);
-      
       this.getAddressFromCoords(resp.coords.latitude, resp.coords.longitude);
       this.actualUbication = "lat: "+ resp.coords.latitude +" long: "+resp.coords.longitude;
       this.address = this.actualUbication;    
@@ -89,9 +81,10 @@ export class HomePage {
  
     }).catch((error) => {
       console.log('Error getting location', error);
-    }); 
-
+    });    
   }
+
+  
 
   loadIndicators(){
     this.createIndicator("Colombia Quindio Armenia Institucion educativa nuestra señora el belén",3);

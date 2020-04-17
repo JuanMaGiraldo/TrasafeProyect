@@ -1,5 +1,5 @@
 {
-  "name": "Trasafe",
+  "name": "trasafe",
   "version": "0.0.1",
   "author": "Ionic Framework",
   "homepage": "https://ionicframework.com/",
@@ -91,5 +91,14 @@
       "browser",
       "android"
     ]
+  },
+  "main": "karma.conf.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JuanMaGiraldo/TrasafeProyect.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JuanMaGiraldo/TrasafeProyect/issues"
   }
 }
