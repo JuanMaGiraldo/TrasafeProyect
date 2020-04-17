@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
 import { NavController } from '@ionic/angular';
 import { AuthenticationService } from '../../services/authentication.service';
+import { Storage } from '@ionic/storage';
+import * as firebase from 'firebase';
 
 @Component({
   selector: 'app-login',
@@ -17,12 +19,14 @@ export class LoginPage implements OnInit {
  
     private navCtrl: NavController,
     private authService: AuthenticationService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private storage: Storage
  
   ) { }
  
   ngOnInit() {
- 
+    this.verifyUser();
+
     this.validations_form = this.formBuilder.group({
       email: new FormControl('', Validators.compose([
         Validators.required,
@@ -33,6 +37,14 @@ export class LoginPage implements OnInit {
         Validators.required
       ])),
     });
+  }
+
+  async verifyUser(){
+    var user = firebase.auth().currentUser; 
+    if (user) {      
+      await this.storage.set('uid', user.uid);
+      await this.navCtrl.navigateForward('/home');
+    } 
   }
  
  
@@ -51,10 +63,8 @@ export class LoginPage implements OnInit {
   loginUser(value){
     this.authService.loginUser(value)
     .then(res => {
-      console.log(res);
-      console.log("uId:" + res.user.uid);
       this.errorMessage = "";
-      this.navCtrl.navigateForward('/home');
+      this.verifyUser();
     }, err => {
       this.errorMessage = err.message;
     })

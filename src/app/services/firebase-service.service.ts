@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
-import { AngularFirestore } from '@angular/fire/firestore';
+import { AngularFirestore, validateEventsArray } from '@angular/fire/firestore';
+import { Storage } from '@ionic/storage';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirebaseServiceService {
 
-  constructor(public db: AngularFirestore) { }
+  constructor(
+    
+    private db: AngularFirestore,
+    private storage: Storage
+    
+    ) { }
 
   addUser(user){
     return new Promise<any>((resolve,reject)=>{
@@ -14,13 +20,31 @@ export class FirebaseServiceService {
         this.db.collection('/users').add({
           name: "usuario",
           email: user.email,
-          uid: user.uid
+          uid: user.uid,
+          ubication: "",
         }).then(
           res => resolve(res),
           err => reject(err)
         )
-
     })
+  }
+
+  getUser(){
+    var val;
+    this.storage.get("uid").then( (res) =>{
+      val = res;
+    });
+    if(val){
+      return val;
+    }
+    return "";
+  }
+
+  saveNewUbication(ubication){
+    var uid = this.getUser();
+    this.db.collection("/users").doc("JrXolQYXQALEGmK1tRcT").update({
+      ubication: ubication
+    });
   }
 
   readUsers(){

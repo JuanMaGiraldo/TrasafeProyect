@@ -30,4 +30,101 @@
     margin-top: -41px;
   }
 }
+
+#pac-input {
+  background-color: #fff;
+  font-family: Roboto;
+  font-size: 15px;
+  font-weight: 300;
+  margin-left: 12px;
+  padding: 0 11px 0 13px;
+  text-overflow: ellipsis;
+  width: 400px;
+}
+
+#pac-input:focus {
+  border-color: #4d90fe;
+}
  
+.alertImages{  
+  height: 40px;
+  width: 40px;
+  margin-left: 20px;
+  margin-right: 0px;
+}
+
+.numberCircle {
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  float:right;
+  background: gray;
+  border: 2px solid #666;
+  color: #666;
+  text-align: center;
+
+  font: 32px Arial, sans-serif;
+}
+
+.info-user{
+  -webkit-box-shadow: 0px -8px 12px -3px rgba(0,0,0,0.53); 
+  box-shadow: 0px -8px 12px -3px rgba(0,0,0,0.53);
+  margin-top: 10px;
+  
+}
+
+.share-location, .noshare-location{
+  display:table;
+   border-spacing:1px;  
+  border-bottom: 0.1px solid rgb(190, 189, 189);  
+  width: 100%;
+}
+
+.share{
+  position: relative;
+  display: table-cell; 
+  vertical-align: middle;
+  margin-left: 0px;
+}
+
+.lowRisk{
+  color: white;
+  background-color: green;
+  font-weight: bold;
+}
+
+.mediumRisk{
+  color:black;
+  background-color: yellow;
+  font-weight: bold;
+}
+
+.highRisk{
+  color:white;
+  background-color: red;
+  font-weight: bold;
+}
+
+#indicatorUbication{  
+  display: inline-block;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 5px;
+}
+
+.divUserZone{
+  display: block;
+  align-items: center;
+  overflow: hidden; 
+  text-align: center;
+  border-bottom: 0.1px solid rgb(190, 189, 189);  
+}
+
+.div-optios{
+  display:grid;
+}
+
+.icon-menu{
+  zoom:2.0;
+}

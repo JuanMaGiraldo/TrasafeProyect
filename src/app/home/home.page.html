@@ -4,21 +4,51 @@
       <ion-title>Google Map</ion-title>
     </ion-col>
     <ion-col text-end>
-      <ion-button (click)="loadMap()" shape="round" fill="outline">
+      <ion-button (click)="getActualPosition()" shape="round" fill="outline">
         <ion-icon slot="start" name="locate"></ion-icon>
-        Where I Am
+        ¿Dónde estoy?
       </ion-button>
     </ion-col>
   </ion-row>
 </ion-header>
 <ion-content>
-
+  
   <div class="map-wrapper">
     <div #map id="map"></div>
   </div>
-  <div id="address">
+  <div class = "info-user">       
+    <div *ngIf = "isSharingLocation" class ="share-location"  (click) = "shareLocationClick()">
+      <img  class = "alertImages" src='../../assets/icon/share-location.png' >      
+      <span class = "share" >Dejar de compartir</span>  
+    </div>
+    <div *ngIf = "!isSharingLocation" class = "noshare-location"  (click) = "shareLocationClick()">
+      <img  class = "alertImages" src='../../assets/icon/noshare-location.png'>
+      <span class = "share">Compartir ubicación</span>  
+    </div>    
+    <div class = "divUserZone" >
+      <span id = "indicatorUbication" >{{userZone}}</span>
+    </div>
+    
+    <div class="div-options">
+      <a icon-menu href="">
+        <ion-icon name="help-circle"></ion-icon>
+      </a>
+      
+  
+      <a icon-menu href="tel:123">
+        <ion-icon name="call"></ion-icon>
+        <i class="icon ion-ios-telephone"></i>
+        <strong>Llamar</strong>
+      </a>
+  
+      <a icon-menu href="">
+        <ion-icon name="settings"></ion-icon>
+      </a>
+    </div>
+    
     <span>{{address}}</span>
   </div>
+  
  
  
 </ion-content>
