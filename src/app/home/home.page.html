@@ -4,7 +4,7 @@
       <ion-title>Google Map</ion-title>
     </ion-col>
     <ion-col text-end>
-      <ion-button (click)="getActualLocation()" shape="round" fill="outline">
+      <ion-button (click)="whereIAm()" shape="round" fill="outline">
         <ion-icon slot="start" name="locate"></ion-icon>
         ¿Dónde estoy?
       </ion-button>
@@ -16,6 +16,8 @@
   <div class="map-wrapper">
     <div #map id="map"></div>
   </div>
+
+  
   <div class = "info-user">       
     <div *ngIf = "isSharingLocation" class ="share-location"  (click) = "shareLocationClick()">
       <img  class = "alertImages" src='../../assets/icon/share-location.png' >      

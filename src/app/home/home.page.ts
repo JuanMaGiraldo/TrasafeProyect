@@ -19,6 +19,7 @@ export class HomePage {
   map: any;
   address:string = "";
   marker: any;
+  line: any;
   areIndicatorsLoaded : boolean = false;
   arrayMarkers: Marker[] = [];
   isSharingLocation: Boolean;
@@ -29,6 +30,7 @@ export class HomePage {
   userZone: string;
   actualUbication: any;
   mapOptions: any;
+  
   private options: NativeGeocoderOptions = {
     useLocale: true,
     maxResults: 5
@@ -64,23 +66,40 @@ export class HomePage {
  
   loadMap() {
     this.geolocation.getCurrentPosition().then((resp) => {
-      let latLng = new google.maps.LatLng(resp.coords.latitude, resp.coords.longitude);     
+
+      this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);  
+
+      let latLng = new google.maps.LatLng(resp.coords.latitude, resp.coords.longitude);          
       
-      this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
+      this.map.setCenter(latLng);
+      this.map.setZoom(17);
+
+      this.loadIndicators();
+      
+      this.getAddressFromCoords(resp.coords.latitude, resp.coords.longitude);
+      this.actualUbication = "lat: "+ resp.coords.latitude +" long: "+resp.coords.longitude;
+      this.address = this.actualUbication;     
+      this.map.addListener('tilesloaded', () => {        
+        this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());        
+      });
+    }).catch((error) => {
+      this.address =  error;
+    });    
+  }
+
+  whereIAm() {
+    this.address  = "hey";
+    this.geolocation.getCurrentPosition().then((resp) => {
+      this.address = "address get";
+      let latLng = new google.maps.LatLng(resp.coords.latitude, resp.coords.longitude);   
+      this.address = latLng;
       this.map.setCenter(latLng);
       this.map.setZoom(17);
       this.getAddressFromCoords(resp.coords.latitude, resp.coords.longitude);
       this.actualUbication = "lat: "+ resp.coords.latitude +" long: "+resp.coords.longitude;
-      this.address = this.actualUbication;    
- 
-      /*this.map.addListener('tilesloaded', () => {
-        
-        this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());
-        
-      });*/
- 
+      this.address = this.actualUbication;           
     }).catch((error) => {
-      console.log('Error getting location', error);
+      this.address =  error;
     });    
   }
 
@@ -195,12 +214,7 @@ export class HomePage {
         headers.map((header)=> data += info[header]+" ");
         
         //this.address = JSON.stringify(info)+ " ----- "+ data;
-        if(!this.areIndicatorsLoaded){
-          this.areIndicatorsLoaded = true;
-          this.loadIndicators();
-        }else{
-          this.getNearestLocation(lattitude,longitude);          
-        }
+        this.getNearestLocation(lattitude,longitude);          
       })
       .catch((error: any) =>{         
         this.address += "Error " + error;
@@ -210,8 +224,7 @@ export class HomePage {
   getNearestLocation(userLat, userLong){
     var nearDistance = null;
     var nearMarker;
-    this.arrayMarkers.map((marker) =>{
-      
+    this.arrayMarkers.map((marker) =>{      
       var coord = marker.coords;
       var distance = Math.sqrt(Math.pow(coord.lat - userLat,2) + Math.pow(coord.lng - userLong,2));
       if(nearDistance == null || nearDistance > distance ){
@@ -219,6 +232,13 @@ export class HomePage {
         nearMarker = marker;        
       }
     });
+
+    var path =  [
+      {lat: parseFloat(nearMarker.coords.lat), lng: parseFloat(nearMarker.coords.lng)},
+      {lat: parseFloat(userLat) ,       lng: parseFloat(userLong)} 
+    ];
+
+    this.createLineBetweenPoints(path);   
     
     var info = this.getMessage(nearMarker.indicator);
     this.userZone = info[0];
@@ -237,15 +257,14 @@ export class HomePage {
     var i = 1;
     var interval = setInterval(() => {
       this.address = "sharing ubication";
-      if(!this.isSharingLocation){
+      if(!this.isSharingLocation || i == 20){
        clearInterval(interval); 
-       this.address = "no interval";
       }
       else{
-        this.address = (i++) +"";
+        this.address = "Share location: " +  (i++);
         this.firebasService.saveNewUbication(this.actualUbication);      
       }      
-    }, 2000);   
+    }, 5000);   
   }
 
   shareLocationClick(){
@@ -264,7 +283,7 @@ export class HomePage {
           text: 'Si',
           cssClass: 'primary',
           handler: () => {
-            
+            this.lastSafe = new Date();
           }
         }, {
           text: 'No',
@@ -314,6 +333,30 @@ export class HomePage {
     });
 
     await alert.present();
+  }
+
+  createLineBetweenPoints(path){
+    var lineSymbol = {
+      path: 'M 0,-1 0,1',
+      strokeOpacity: 1,
+      scale: 2
+    };
+
+    if(this.line){
+      this.line.setMap(null);
+    }
+    var line = new google.maps.Polyline({
+      path,
+      strokeColor: "#ff1a1a",
+      strokeOpacity: 0,
+          icons: [{
+            icon: lineSymbol,
+            offset: '0',
+            repeat: '20px'
+          }],
+      map: this.map
+    });
+    this.line = line;
   }
 
   askAlertAgain(){
