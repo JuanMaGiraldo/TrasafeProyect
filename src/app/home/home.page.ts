@@ -4,7 +4,9 @@ import { NativeGeocoder, NativeGeocoderResult, NativeGeocoderOptions } from '@io
 import { Marker } from '../models/marker';
 import { AlertController } from '@ionic/angular';
 import { FirebaseServiceService } from '../services/firebase-service.service';
-
+import { AuthenticationService } from '../services/authentication.service';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 declare var google;
 
@@ -30,7 +32,12 @@ export class HomePage {
   userZone: string;
   actualUbication: any;
   mapOptions: any;
-  
+  isTracking: boolean;
+  postionSubscription: Subscription;
+  trackingUbication: string;
+  lastTrackUbication: any;
+  isShowingMessage: boolean;
+
   private options: NativeGeocoderOptions = {
     useLocale: true,
     maxResults: 5
@@ -41,7 +48,8 @@ export class HomePage {
     private geolocation: Geolocation,
     private nativeGeocoder: NativeGeocoder,
     private alertController: AlertController,
-    private firebasService: FirebaseServiceService
+    private firebasService: FirebaseServiceService,
+    private authService: AuthenticationService
 
     ) {
     this.mapOptions = {      
@@ -57,65 +65,72 @@ export class HomePage {
     this.dontAskAgain = false;
     this.srcIndicator = "";
     this.actualUbication = null;
+    this.trackingUbication = "";
   }
   
- 
-  ngOnInit() {
-    this.loadMap();    
+  ngOnInit() {}
+  
+  ngAfterViewInit(){    
+    this.loadMap();
   }
- 
+
   loadMap() {
-    this.geolocation.getCurrentPosition().then((resp) => {
-
-      this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);  
-
-      let latLng = new google.maps.LatLng(resp.coords.latitude, resp.coords.longitude);          
-      
-      this.map.setCenter(latLng);
-      this.map.setZoom(17);
-
-      this.loadIndicators();
-      
-      this.getAddressFromCoords(resp.coords.latitude, resp.coords.longitude);
-      this.actualUbication = "lat: "+ resp.coords.latitude +" long: "+resp.coords.longitude;
-      this.address = this.actualUbication;     
-      this.map.addListener('tilesloaded', () => {        
-        this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());        
-      });
-    }).catch((error) => {
-      this.address =  error;
-    });    
+    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
+    this.loadIndicators();
+    this.whereIAm();
+    this.startTracking();    
+    
   }
-
-  whereIAm() {
-    this.address  = "hey";
-    this.geolocation.getCurrentPosition().then((resp) => {
-      this.address = "address get";
-      let latLng = new google.maps.LatLng(resp.coords.latitude, resp.coords.longitude);   
-      this.address = latLng;
-      this.map.setCenter(latLng);
-      this.map.setZoom(17);
-      this.getAddressFromCoords(resp.coords.latitude, resp.coords.longitude);
-      this.actualUbication = "lat: "+ resp.coords.latitude +" long: "+resp.coords.longitude;
-      this.address = this.actualUbication;           
-    }).catch((error) => {
-      this.address =  error;
-    });    
-  }
-
   
+  centerMap(){    
+    this.map.setCenter(this.actualUbication);
+    this.map.setZoom(17);
+  }
+
+  whereIAm() {    
+    this.geolocation.getCurrentPosition().then((resp) => {
+
+      var coords = resp.coords;
+      let latLng = new google.maps.LatLng(coords.latitude, coords.longitude);   
+      this.actualUbication = {lat: coords.latitude, lng: coords.longitude};
+      this.map.setCenter(latLng);
+      this.map.setZoom(17);      
+
+      //this.getAddressFromCoords(resp.coords.latitude, resp.coords.longitude);
+      /*this.map.addListener('tilesloaded', () => {        
+        this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());        
+      });*/
+    }).catch((error) => {
+      this.address =  "Error in where i am: "+  error;
+    });    
+  }
+
+  startTracking(){    
+    this.trackingUbication = "Track: ";
+    this.postionSubscription = this.geolocation.watchPosition()
+    .pipe(
+      filter(p => p.coords != undefined)
+    )
+    .subscribe( data => {
+      setTimeout(() =>{
+        var myLatLng = new google.maps.LatLng(data.coords.latitude, data.coords.longitude);        
+        this.trackingUbication +=  myLatLng +"\r\n";
+        this.actualUbication = {lat: data.coords.latitude, lng: data.coords.longitude};        
+        this.setUserMarker();
+        this.getNearestLocation();
+      });
+    });
+  }
 
   loadIndicators(){
     this.createIndicator("Colombia Quindio Armenia Institucion educativa nuestra señora el belén",3);
     this.createIndicator("Colombia Quindio Armenia Vetcenter Centro veterinario",2);
     this.createIndicator("Colombia Quindio Armenia Iglesia el belén",3);
     this.createIndicator("Colombia Quindio Armenia el placer",3);
-    this.createIndicator("Colombia Quindio Armenia Comedor colegio nuestra señora de belen",1);
-     
+    this.createIndicator("Colombia Quindio Armenia Comedor colegio nuestra señora de belen",1);     
   }
   
-  createIndicator(location,indicator){    
-    
+  createIndicator(location,indicator){        
     this.nativeGeocoder.forwardGeocode(location, this.options)
     .then((result: NativeGeocoderResult[]) =>{
       if( location != null && location != ""){
@@ -128,9 +143,9 @@ export class HomePage {
     })
     .catch((error: any) => this.address += "Error en create" + error);
   }
-
+  
   setMarker(lat,long, indicator = null, title = "", body = ""){
-
+    
     var marker;
     var myLatLng = null;
     var map = this.map;
@@ -139,11 +154,16 @@ export class HomePage {
     if(lat != null && long != null && indicator != null && typeof indicator != 'undefined'){
           
       myLatLng = {lat: lat, lng: long};
+      
     if(indicator == "user"){
+      if(this.lastTrackUbication != null && lat == this.lastTrackUbication["lat"] && long == this.lastTrackUbication["lng"]){
+        return;
+      }
 
       if(this.marker){
         this.marker.setMap(null);
       }
+      this.lastTrackUbication = myLatLng;
 
       marker = new google.maps.Marker({
         position: myLatLng,
@@ -202,28 +222,26 @@ export class HomePage {
   }
    
   getAddressFromCoords(lattitude, longitude) {
-    
-    this.setMarker(lattitude,longitude,"user");
-    
     this.nativeGeocoder.reverseGeocode(lattitude, longitude, this.options)
       .then((result: NativeGeocoderResult[]) => {
         var info = result[0];
-        var headers = ["countryName", "administrativeArea","locality","thoroughfare"];
+        var headers = ["countryName", "administrativeArea","locality"]; //,"thoroughfare"];
         var data = "";
-
         headers.map((header)=> data += info[header]+" ");
         
-        //this.address = JSON.stringify(info)+ " ----- "+ data;
-        this.getNearestLocation(lattitude,longitude);          
+        //this.address = JSON.stringify(info)+ " ----- "+ data;      
       })
       .catch((error: any) =>{         
-        this.address += "Error " + error;
+        this.address += "Error in get addres from coords: " + error;
       });
   }
 
-  getNearestLocation(userLat, userLong){
+  getNearestLocation(){
     var nearDistance = null;
     var nearMarker;
+    var userLat = this.actualUbication["lat"];
+    var userLong = this.actualUbication["lng"];
+
     this.arrayMarkers.map((marker) =>{      
       var coord = marker.coords;
       var distance = Math.sqrt(Math.pow(coord.lat - userLat,2) + Math.pow(coord.lng - userLong,2));
@@ -243,26 +261,31 @@ export class HomePage {
     var info = this.getMessage(nearMarker.indicator);
     this.userZone = info[0];
     (<HTMLInputElement> document.getElementById("indicatorUbication")).className = info[1]
-    if(!this.dontAskAgain && nearMarker.indicator == 1 && !this.isSharingLocation && this.askAlertAgain()){
+    if(!this.isShowingMessage && !this.dontAskAgain && nearMarker.indicator == 1 && !this.isSharingLocation && this.askAlertAgain()){
+      this.isShowingMessage = true;
       this.notifyAlert();
     }
     
-    if(!this.dontAskAgain && nearMarker.indicator != 1 && this.isSharingLocation && this.askSafeAgain()){
+    if(!this.isShowingMessage && !this.dontAskAgain && nearMarker.indicator != 1 && this.isSharingLocation && this.askSafeAgain()){
+      this.isShowingMessage = true;
       this.notifySafe();
     }
   }
-
+  
   async shareUbication(){
-    this.address = this.isSharingLocation+"";
+    var uid = this.authService.getActualUser();
     var i = 1;
-    var interval = setInterval(() => {
-      this.address = "sharing ubication";
+    if(this.isSharingLocation){
+      this.firebasService.saveNewUbication(JSON.stringify(this.actualUbication),uid);
+      
+    }
+    var interval = setInterval(() => {      
       if(!this.isSharingLocation || i == 20){
        clearInterval(interval); 
       }
       else{
-        this.address = "Share location: " +  (i++);
-        this.firebasService.saveNewUbication(this.actualUbication);      
+        this.address = "Share location: " +  (i++)+" " + JSON.stringify(this.actualUbication);
+        this.firebasService.saveNewUbication(JSON.stringify(this.actualUbication),uid);
       }      
     }, 5000);   
   }
@@ -284,17 +307,20 @@ export class HomePage {
           cssClass: 'primary',
           handler: () => {
             this.lastSafe = new Date();
+            this.isShowingMessage = false;
           }
         }, {
           text: 'No',
           handler: () => {
             // sleep()
+            this.isShowingMessage = false;
             this.isSharingLocation = false;
           }        
         }, {
           text: 'No preguntar de nuevo',
           handler: () => {
             // sleep()
+            this.isShowingMessage = false;
             this.dontAskAgain = true;
           }
         }
@@ -315,11 +341,13 @@ export class HomePage {
           cssClass: 'primary',
           handler: () => {            
             this.isSharingLocation = true;
+            this.isShowingMessage = false;
             this.shareUbication();
           }
         }, {
           text: 'No',
           handler: () => {
+            this.isShowingMessage = false;
             this.lastAlert = new Date();
           }
         }, {
@@ -327,6 +355,7 @@ export class HomePage {
           handler: () => {
             // sleep()
             this.dontAskAgain = true;
+            this.isShowingMessage = false;
           }
         }
       ] 
@@ -416,4 +445,9 @@ export class HomePage {
        return ['Zona de alto riesgo','highRisk'];
     }
   } 
+
+  setUserMarker(){
+    
+    this.setMarker(this.actualUbication.lat,this.actualUbication.lng, "user");
+  }
 }

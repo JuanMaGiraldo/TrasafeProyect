@@ -4,7 +4,7 @@
       <ion-title>Google Map</ion-title>
     </ion-col>
     <ion-col text-end>
-      <ion-button (click)="whereIAm()" shape="round" fill="outline">
+      <ion-button (click)="centerMap()" shape="round" fill="outline">
         <ion-icon slot="start" name="locate"></ion-icon>
         ¿Dónde estoy?
       </ion-button>
@@ -47,8 +47,10 @@
         <ion-icon name="settings"></ion-icon>
       </a>
     </div>
-    
+    <span>{{trackingUbication}} </span>
     <span>{{address}}</span>
+    
+
   </div>
   
  

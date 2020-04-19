@@ -16,13 +16,11 @@ export class FirebaseServiceService {
 
   addUser(user){
     return new Promise<any>((resolve,reject)=>{
-      console.log(user);
-        this.db.collection('/users').add({
-          name: "usuario",
-          email: user.email,
-          uid: user.uid,
-          ubication: "",
-        }).then(
+        var users = this.db.collection("/users");
+        users.doc(user.uid).set({
+          ubication:""
+        })
+        .then(
           res => resolve(res),
           err => reject(err)
         )
@@ -40,11 +38,12 @@ export class FirebaseServiceService {
     return "";
   }
 
-  saveNewUbication(ubication){
-    var uid = this.getUser();
-    this.db.collection("/users").doc("JrXolQYXQALEGmK1tRcT").update({
+  saveNewUbication(ubication, uid){
+    
+    this.db.collection("/users").doc(uid).update({
       ubication: ubication
     });
+    return uid;
   }
 
   readUsers(){

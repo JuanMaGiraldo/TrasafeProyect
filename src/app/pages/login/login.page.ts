@@ -3,7 +3,9 @@ import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms'
 import { NavController } from '@ionic/angular';
 import { AuthenticationService } from '../../services/authentication.service';
 import { Storage } from '@ionic/storage';
+import { FirebaseServiceService } from '../../services/firebase-service.service';
 import * as firebase from 'firebase';
+
 
 @Component({
   selector: 'app-login',
@@ -20,7 +22,8 @@ export class LoginPage implements OnInit {
     private navCtrl: NavController,
     private authService: AuthenticationService,
     private formBuilder: FormBuilder,
-    private storage: Storage
+    private storage: Storage,
+    private firebaseService: FirebaseServiceService
  
   ) { }
  
@@ -43,7 +46,10 @@ export class LoginPage implements OnInit {
     var user = firebase.auth().currentUser; 
     if (user) {      
       await this.storage.set('uid', user.uid);
+      console.log("Firebase logueado "+ user.uid);
       await this.navCtrl.navigateForward('/home');
+    }else{
+      
     } 
   }
  
@@ -62,12 +68,11 @@ export class LoginPage implements OnInit {
  
   loginUser(value){
     this.authService.loginUser(value)
-    .then(res => {
-      this.errorMessage = "";
+    .then(res => {              
       this.verifyUser();
     }, err => {
-      this.errorMessage = err.message;
-    })
+      this.errorMessage = err.message;      
+    });    
   }
  
   goToRegisterPage(){
