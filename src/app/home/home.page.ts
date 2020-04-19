@@ -4,6 +4,7 @@ import { NativeGeocoder, NativeGeocoderResult, NativeGeocoderOptions } from '@io
 import { Marker } from '../models/marker';
 import { AlertController } from '@ionic/angular';
 import { FirebaseServiceService } from '../services/firebase-service.service';
+import { AngularFirestore } from '@angular/fire/firestore';
 import { AuthenticationService } from '../services/authentication.service';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -37,6 +38,9 @@ export class HomePage {
   trackingUbication: string;
   lastTrackUbication: any;
   isShowingMessage: boolean;
+  locations: any;
+  dataUbication: any[];
+  arrayLocalities: any[];
 
   private options: NativeGeocoderOptions = {
     useLocale: true,
@@ -49,7 +53,8 @@ export class HomePage {
     private nativeGeocoder: NativeGeocoder,
     private alertController: AlertController,
     private firebasService: FirebaseServiceService,
-    private authService: AuthenticationService
+    private authService: AuthenticationService,
+    private db: AngularFirestore,
 
     ) {
     this.mapOptions = {      
@@ -74,9 +79,8 @@ export class HomePage {
     this.loadMap();
   }
 
-  loadMap() {
-    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
-    this.loadIndicators();
+  async loadMap() {
+    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);    
     this.whereIAm();
     this.startTracking();    
     
@@ -87,22 +91,23 @@ export class HomePage {
     this.map.setZoom(17);
   }
 
-  whereIAm() {    
+  whereIAm() { 
+    var data = [];   
     this.geolocation.getCurrentPosition().then((resp) => {
-
       var coords = resp.coords;
       let latLng = new google.maps.LatLng(coords.latitude, coords.longitude);   
       this.actualUbication = {lat: coords.latitude, lng: coords.longitude};
       this.map.setCenter(latLng);
       this.map.setZoom(17);      
-
-      //this.getAddressFromCoords(resp.coords.latitude, resp.coords.longitude);
+      this.getAddressFromCoords(coords.latitude, coords.longitude);
+      
       /*this.map.addListener('tilesloaded', () => {        
         this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());        
       });*/
     }).catch((error) => {
       this.address =  "Error in where i am: "+  error;
-    });    
+    }); 
+    return data;   
   }
 
   startTracking(){    
@@ -122,12 +127,24 @@ export class HomePage {
     });
   }
 
-  loadIndicators(){
-    this.createIndicator("Colombia Quindio Armenia Institucion educativa nuestra señora el belén",3);
+  async loadIndicators(){
+    var data = this.dataUbication;
+    /* this.createIndicator("Colombia Quindio Armenia Institucion educativa nuestra señora el belén",3);
     this.createIndicator("Colombia Quindio Armenia Vetcenter Centro veterinario",2);
     this.createIndicator("Colombia Quindio Armenia Iglesia el belén",3);
     this.createIndicator("Colombia Quindio Armenia el placer",3);
-    this.createIndicator("Colombia Quindio Armenia Comedor colegio nuestra señora de belen",1);     
+    this.createIndicator("Colombia Quindio Armenia Comedor colegio nuestra señora de belen",1);    */
+
+    if(data != null && data.length == 3 ){
+      var country    = data[0];
+      var department = data[1];
+      var city       = data[2];
+      this.address += country +" "+ department +" "+ city;
+      this.getLocations("Colombia","Quindío","Armenia"); 
+      
+      
+    }
+    
   }
   
   createIndicator(location,indicator){        
@@ -222,18 +239,27 @@ export class HomePage {
   }
    
   getAddressFromCoords(lattitude, longitude) {
+    
+    var data = "";
+    var arrayData = [];
+    var headers = ["countryName", "administrativeArea","locality"]; //,"thoroughfare"];
+    var info;
     this.nativeGeocoder.reverseGeocode(lattitude, longitude, this.options)
       .then((result: NativeGeocoderResult[]) => {
-        var info = result[0];
-        var headers = ["countryName", "administrativeArea","locality"]; //,"thoroughfare"];
-        var data = "";
-        headers.map((header)=> data += info[header]+" ");
-        
-        //this.address = JSON.stringify(info)+ " ----- "+ data;      
+        info = result[0];      
+        headers.map((header)=> {  
+          data+= info[header] +",";        
+        });  
+        arrayData = data.split(",");
+        arrayData.pop();
+        this.dataUbication = arrayData; 
+        this.loadIndicators();
       })
       .catch((error: any) =>{         
         this.address += "Error in get addres from coords: " + error;
-      });
+      });       
+    
+    
   }
 
   getNearestLocation(){
@@ -449,5 +475,36 @@ export class HomePage {
   setUserMarker(){
     
     this.setMarker(this.actualUbication.lat,this.actualUbication.lng, "user");
+  }
+
+  getLocations(country,department,city){
+    this.arrayLocalities = [];
+    var countryRef = this.db.collection("countries");
+    countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country));
+    countryRef.get()
+    .toPromise()
+    .then((querySnapshot) => {      
+      querySnapshot.forEach((countryObj) => {
+        countryObj.ref.collection("departments").where("department",">=",department).get().then((querySnapshot) => {      
+          querySnapshot.forEach(cityObj => {
+            cityObj.ref.collection("cities").where("city",">=",city).get().then((querySnapshot) => {      
+              querySnapshot.forEach(localityObj => {                
+                localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                   
+                  querySnapshot.forEach(locality => {
+                    this.arrayLocalities.push(JSON.stringify(locality.data()));
+                    let localityObj = locality.data();
+                    var query = country +" "+ department +" "+ city +" "+ localityObj["location"];
+                    this.createIndicator(query, localityObj["ranking"]);  
+                  });
+                });
+              });      
+            });
+          });      
+        });
+      });
+    });
+    
+    
+    
   }
 }

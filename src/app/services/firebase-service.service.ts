@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { AngularFirestore, validateEventsArray } from '@angular/fire/firestore';
+import { AngularFirestore } from '@angular/fire/firestore';
 import { Storage } from '@ionic/storage';
+//import 'rxjs/add/operator/toPromise';
 
 @Injectable({
   providedIn: 'root'
@@ -51,5 +52,31 @@ export class FirebaseServiceService {
     .subscribe(res => {
       console.log(res);
     })    
+  }
+
+  getLocations(country,department,city){
+    var arrayLocalities = [];
+    var countryRef = this.db.collection("countries");
+    countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country));
+    countryRef.get()
+    .toPromise()
+    .then((querySnapshot) => {      
+      querySnapshot.forEach((countryObj) => {
+        countryObj.ref.collection("departments").where("department",">=",department).get().then((querySnapshot) => {      
+          querySnapshot.forEach(cityObj => {
+            cityObj.ref.collection("cities").where("city",">=",city).get().then((querySnapshot) => {      
+              querySnapshot.forEach(localityObj => {                
+                localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                   
+                  querySnapshot.forEach(locality => {
+                    arrayLocalities.push(locality.data());                    
+                  });
+                });
+              });      
+            });
+          });      
+        });
+      });
+    });
+    return arrayLocalities;
   }
 }
