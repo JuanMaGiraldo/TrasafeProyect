@@ -80,10 +80,9 @@ export class HomePage {
   }
 
   async loadMap() {
-    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);    
+    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);    //create the map
     this.whereIAm();
-    this.startTracking();    
-    
+    this.startTracking();     
   }
   
   centerMap(){    
@@ -97,10 +96,8 @@ export class HomePage {
       var coords = resp.coords;
       let latLng = new google.maps.LatLng(coords.latitude, coords.longitude);   
       this.actualUbication = {lat: coords.latitude, lng: coords.longitude};
-      this.map.setCenter(latLng);
-      this.map.setZoom(17);      
-      this.getAddressFromCoords(coords.latitude, coords.longitude);
-      
+      this.centerMap();      
+      this.getAddressFromCoords(coords.latitude, coords.longitude);      
       /*this.map.addListener('tilesloaded', () => {        
         this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());        
       });*/
@@ -129,36 +126,39 @@ export class HomePage {
 
   async loadIndicators(){
     var data = this.dataUbication;
-    /* this.createIndicator("Colombia Quindio Armenia Institucion educativa nuestra señora el belén",3);
-    this.createIndicator("Colombia Quindio Armenia Vetcenter Centro veterinario",2);
-    this.createIndicator("Colombia Quindio Armenia Iglesia el belén",3);
-    this.createIndicator("Colombia Quindio Armenia el placer",3);
-    this.createIndicator("Colombia Quindio Armenia Comedor colegio nuestra señora de belen",1);    */
-
+    // this.createIndicator("Colombia Quindio Armenia Institucion educativa nuestra señora el belén",3); this.createIndicator("Colombia Quindio Armenia Vetcenter Centro veterinario",2);   this.createIndicator("Colombia Quindio Armenia Comedor colegio nuestra señora de belen",1); 
     if(data != null && data.length == 3 ){
       var country    = data[0];
       var department = data[1];
       var city       = data[2];
-      this.address += country +" "+ department +" "+ city;
-      this.getLocations("Colombia","Quindío","Armenia"); 
-      
-      
+      this.getLocations(country,department,city,this.loadLocalities); 
     }
-    
+  }
+
+  loadLocalities(dataset,query){  
+    this.address += "load localities";
+    this.address += query;
+    dataset.forEach(element => {
+      this.createIndicator(query , element.location, element.ranking);
+    });
   }
   
-  createIndicator(location,indicator){        
-    this.nativeGeocoder.forwardGeocode(location, this.options)
+  createIndicator(query, location ,indicator){        
+    if( query != null && query != ""){
+    query += " " + location;
+
+    this.nativeGeocoder.forwardGeocode(query, this.options)
     .then((result: NativeGeocoderResult[]) =>{
-      if( location != null && location != ""){
+      
         var lat = parseFloat(result[0].latitude);
         var long = parseFloat(result[0].longitude);
         var marker = new Marker({lat: lat, lng: long}, location, indicator);        
         this.arrayMarkers.push(marker);
-        this.setMarker(lat, long, indicator,"Titulo",location);
-      }
+        this.setMarker(lat, long, indicator,location,"body");
+      
     })
     .catch((error: any) => this.address += "Error en create" + error);
+    }
   }
   
   setMarker(lat,long, indicator = null, title = "", body = ""){
@@ -194,8 +194,8 @@ export class HomePage {
       if(body != "" && title != ""){
 
         var contentCard = '<div id="content">';
-        contentCard += ( title ? '<h1 id="firstHeading" class="firstHeading">'+title+'</h1>' : "");
-        contentCard += ( body  ? '<div id="bodyContent">'+body+'</div>' : "");
+        contentCard += ( title ? '<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">'+title+'</h1>' : "");
+        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>'+ indicator +'</div>' : "");
         contentCard += '</div>';
       
         var infowindow = new google.maps.InfoWindow({
@@ -219,9 +219,7 @@ export class HomePage {
             marker.setAnimation(null);
           }, 2000);
         });
-
-        
-          // Add the circle for this city to the map.
+          
           var cityCircle = new google.maps.Circle({
             strokeColor: '#DAD7D6',
             strokeOpacity: 0.8,
@@ -238,28 +236,21 @@ export class HomePage {
     }      
   }
    
-  getAddressFromCoords(lattitude, longitude) {
-    
-    var data = "";
-    var arrayData = [];
+  getAddressFromCoords(lattitude, longitude) {    
+    this.dataUbication = [];
     var headers = ["countryName", "administrativeArea","locality"]; //,"thoroughfare"];
     var info;
     this.nativeGeocoder.reverseGeocode(lattitude, longitude, this.options)
       .then((result: NativeGeocoderResult[]) => {
         info = result[0];      
         headers.map((header)=> {  
-          data+= info[header] +",";        
+          this.dataUbication.push(info[header]);        
         });  
-        arrayData = data.split(",");
-        arrayData.pop();
-        this.dataUbication = arrayData; 
         this.loadIndicators();
       })
       .catch((error: any) =>{         
         this.address += "Error in get addres from coords: " + error;
       });       
-    
-    
   }
 
   getNearestLocation(){
@@ -302,8 +293,7 @@ export class HomePage {
     var uid = this.authService.getActualUser();
     var i = 1;
     if(this.isSharingLocation){
-      this.firebasService.saveNewUbication(JSON.stringify(this.actualUbication),uid);
-      
+      this.firebasService.saveNewUbication(JSON.stringify(this.actualUbication),uid);      
     }
     var interval = setInterval(() => {      
       if(!this.isSharingLocation || i == 20){
@@ -477,8 +467,8 @@ export class HomePage {
     this.setMarker(this.actualUbication.lat,this.actualUbication.lng, "user");
   }
 
-  getLocations(country,department,city){
-    this.arrayLocalities = [];
+  getLocations(country,department,city, method){
+    var arrayLocalities = [];
     var countryRef = this.db.collection("countries");
     countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country));
     countryRef.get()
@@ -491,20 +481,16 @@ export class HomePage {
               querySnapshot.forEach(localityObj => {                
                 localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                   
                   querySnapshot.forEach(locality => {
-                    this.arrayLocalities.push(JSON.stringify(locality.data()));
-                    let localityObj = locality.data();
-                    var query = country +" "+ department +" "+ city +" "+ localityObj["location"];
-                    this.createIndicator(query, localityObj["ranking"]);  
+                    arrayLocalities.push(locality.data());
                   });
+                  this.loadLocalities(arrayLocalities, country +" "+ department+" "+ city);                  
                 });
               });      
             });
           });      
         });
       });
-    });
-    
-    
-    
+    });        
   }
 }
+//feature branch
