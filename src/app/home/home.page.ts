@@ -20,7 +20,8 @@ export class HomePage {
 
   @ViewChild('map', {static: false}) mapElement: ElementRef;
   map: any;
-  address:string = "";
+  error:string = "";
+  console:string = "";
   marker: any;
   line: any;
   areIndicatorsLoaded : boolean = false;
@@ -41,6 +42,7 @@ export class HomePage {
   locations: any;
   dataUbication: any[];
   arrayLocalities: any[];
+  localitiesLoaded: string[];
 
   private options: NativeGeocoderOptions = {
     useLocale: true,
@@ -71,6 +73,7 @@ export class HomePage {
     this.srcIndicator = "";
     this.actualUbication = null;
     this.trackingUbication = "";
+    this.localitiesLoaded = [];
   }
   
   ngOnInit() {}
@@ -82,7 +85,12 @@ export class HomePage {
   async loadMap() {
     this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);    //create the map
     this.whereIAm();
-    this.startTracking();     
+    this.startTracking();    
+    this.initAutocomplete(); 
+  }
+
+  initAutocomplete() {
+    
   }
   
   centerMap(){    
@@ -94,15 +102,14 @@ export class HomePage {
     var data = [];   
     this.geolocation.getCurrentPosition().then((resp) => {
       var coords = resp.coords;
-      let latLng = new google.maps.LatLng(coords.latitude, coords.longitude);   
       this.actualUbication = {lat: coords.latitude, lng: coords.longitude};
-      this.centerMap();      
+      this.centerMap();    
       this.getAddressFromCoords(coords.latitude, coords.longitude);      
       /*this.map.addListener('tilesloaded', () => {        
         this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());        
       });*/
     }).catch((error) => {
-      this.address =  "Error in where i am: "+  error;
+      this.error =  "Error in where i am: "+  error;
     }); 
     return data;   
   }
@@ -115,8 +122,6 @@ export class HomePage {
     )
     .subscribe( data => {
       setTimeout(() =>{
-        var myLatLng = new google.maps.LatLng(data.coords.latitude, data.coords.longitude);        
-        this.trackingUbication +=  myLatLng +"\r\n";
         this.actualUbication = {lat: data.coords.latitude, lng: data.coords.longitude};        
         this.setUserMarker();
         this.getNearestLocation();
@@ -125,43 +130,42 @@ export class HomePage {
   }
 
   async loadIndicators(){
-    var data = this.dataUbication;
-    // this.createIndicator("Colombia Quindio Armenia Institucion educativa nuestra señora el belén",3); this.createIndicator("Colombia Quindio Armenia Vetcenter Centro veterinario",2);   this.createIndicator("Colombia Quindio Armenia Comedor colegio nuestra señora de belen",1); 
+    var data = this.dataUbication;    
     if(data != null && data.length == 3 ){
       var country    = data[0];
       var department = data[1];
       var city       = data[2];
-      this.getLocations(country,department,city,this.loadLocalities); 
+      var query      = country+" "+department+" "+city;
+
+      if(!this.localitiesLoaded.includes(query)){
+        this.localitiesLoaded.push(query);
+        this.getLocations(country,department,city); 
+      }      
     }
   }
 
   loadLocalities(dataset,query){  
-    this.address += "load localities";
-    this.address += query;
     dataset.forEach(element => {
       this.createIndicator(query , element.location, element.ranking);
     });
   }
   
   createIndicator(query, location ,indicator){        
-    if( query != null && query != ""){
+    if( query != null && query != "" && location != null && location != ""){
     query += " " + location;
-
     this.nativeGeocoder.forwardGeocode(query, this.options)
-    .then((result: NativeGeocoderResult[]) =>{
-      
+    .then((result: NativeGeocoderResult[]) =>{      
         var lat = parseFloat(result[0].latitude);
         var long = parseFloat(result[0].longitude);
         var marker = new Marker({lat: lat, lng: long}, location, indicator);        
         this.arrayMarkers.push(marker);
-        this.setMarker(lat, long, indicator,location,"body");
-      
+        this.createMarker(lat, long, indicator,location,"body");      
     })
-    .catch((error: any) => this.address += "Error en create" + error);
+    .catch((error: any) => this.error += "Error in create indicator: " + error);
     }
   }
   
-  setMarker(lat,long, indicator = null, title = "", body = ""){
+  createMarker(lat,long, indicator = null, title = "", body = ""){
     
     var marker;
     var myLatLng = null;
@@ -249,7 +253,7 @@ export class HomePage {
         this.loadIndicators();
       })
       .catch((error: any) =>{         
-        this.address += "Error in get addres from coords: " + error;
+        this.error += "Error in get addres from coords: " + error;
       });       
   }
 
@@ -300,7 +304,6 @@ export class HomePage {
        clearInterval(interval); 
       }
       else{
-        this.address = "Share location: " +  (i++)+" " + JSON.stringify(this.actualUbication);
         this.firebasService.saveNewUbication(JSON.stringify(this.actualUbication),uid);
       }      
     }, 5000);   
@@ -462,28 +465,27 @@ export class HomePage {
     }
   } 
 
-  setUserMarker(){
-    
-    this.setMarker(this.actualUbication.lat,this.actualUbication.lng, "user");
+  setUserMarker(){    
+    this.createMarker(this.actualUbication.lat,this.actualUbication.lng, "user");
   }
 
-  getLocations(country,department,city, method){
+  getLocations(country,department,city){    
     var arrayLocalities = [];
     var countryRef = this.db.collection("countries");
-    countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country));
+    countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country).where('country', '<=', country+ '\uf8ff'));
     countryRef.get()
     .toPromise()
     .then((querySnapshot) => {      
       querySnapshot.forEach((countryObj) => {
-        countryObj.ref.collection("departments").where("department",">=",department).get().then((querySnapshot) => {      
+        countryObj.ref.collection("departments").where('department', '>=', department).where('department', '<=', department+ '\uf8ff').get().then((querySnapshot) => {      
           querySnapshot.forEach(cityObj => {
-            cityObj.ref.collection("cities").where("city",">=",city).get().then((querySnapshot) => {      
+            cityObj.ref.collection("cities").where('city', '>=', city).where('city', '<=', city+ '\uf8ff').get().then((querySnapshot) => {      
               querySnapshot.forEach(localityObj => {                
-                localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                   
+                localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                            
                   querySnapshot.forEach(locality => {
                     arrayLocalities.push(locality.data());
                   });
-                  this.loadLocalities(arrayLocalities, country +" "+ department+" "+ city);                  
+                  this.loadLocalities(arrayLocalities, country +" "+ department+" "+ city);
                 });
               });      
             });
@@ -492,5 +494,6 @@ export class HomePage {
       });
     });        
   }
+
+ 
 }
-//feature branch

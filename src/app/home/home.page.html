@@ -1,7 +1,7 @@
 <ion-header>
   <ion-row>
-    <ion-col text-start padding-top>
-      <ion-title>Google Map</ion-title>
+    <ion-col text-start>
+      <ion-title style = "color: #254B96; font-family: 'Yellowtail', cursive; font-size: 31px;">Trasafe</ion-title>
     </ion-col>
     <ion-col text-end>
       <ion-button (click)="centerMap()" shape="round" fill="outline">
@@ -12,6 +12,8 @@
   </ion-row>
 </ion-header>
 <ion-content>
+
+  <ion-searchbar showCancelButton="focus"></ion-searchbar>
   
   <div class="map-wrapper">
     <div #map id="map"></div>
@@ -30,30 +32,8 @@
     <div class = "divUserZone" >
       <span id = "indicatorUbication" >{{userZone}}</span>
     </div>
-    
-    <div class="div-options">
-      <a icon-menu href="">
-        <ion-icon name="help-circle"></ion-icon>
-      </a>
-      
-  
-      <a icon-menu href="tel:123">
-        <ion-icon name="call"></ion-icon>
-        <i class="icon ion-ios-telephone"></i>
-        <strong>Llamar</strong>
-      </a>
-  
-      <a icon-menu href="">
-        <ion-icon name="settings"></ion-icon>
-      </a>
-    </div>
     <span style = "display:none;">{{trackingUbication}} </span>
-    <span>{{address}}</span>
-    
-    
-
+    <span>{{console}}</span>
+    <span style = "color:red;">{{error}} </span>
   </div>
-  
- 
- 
 </ion-content>
