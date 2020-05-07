@@ -12,9 +12,11 @@
   </ion-row>
 </ion-header>
 <ion-content>
+  <ion-item>
+    <input id = "pac-input" class = "controls" type="text" [(ngModel)]="placetoSearch" placeholder="Consultar un lugar:">
+    <ion-button (click)= "searchInfoPlace()" color= "primary"><ion-icon name="search-circle-outline"></ion-icon></ion-button>
+  </ion-item>
 
-  <ion-searchbar showCancelButton="focus"></ion-searchbar>
-  
   <div class="map-wrapper">
     <div #map id="map"></div>
   </div>

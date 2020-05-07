@@ -43,7 +43,7 @@ export class HomePage {
   dataUbication: any[];
   arrayLocalities: any[];
   localitiesLoaded: string[];
-
+  placetoSearch: string = "";
   private options: NativeGeocoderOptions = {
     useLocale: true,
     maxResults: 5
@@ -84,13 +84,33 @@ export class HomePage {
 
   async loadMap() {
     this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);    //create the map
+    this.initAutocomplete();
     this.whereIAm();
-    this.startTracking();    
-    this.initAutocomplete(); 
+    this.startTracking();        
   }
-
-  initAutocomplete() {
+  searchInfoPlace(){
     
+    var place = this.placetoSearch;
+
+    if( place != null && place != "" ){      
+      this.nativeGeocoder.forwardGeocode(place, this.options)
+      .then((result: NativeGeocoderResult[]) =>{      
+          var lat = parseFloat(result[0].latitude);
+          var long = parseFloat(result[0].longitude);
+          this.map.setCenter({lat: lat, lng: long});
+          this.map.setZoom(17);     
+          this.getAddressFromCoords(lat,long);
+      })
+      .catch((error: any) => this.error += "Error in search info place: " + error);
+      }
+    
+  }
+  initAutocomplete() {
+    var input = document.getElementById('pac-input');
+    var searchBox = new google.maps.places.SearchBox(input);
+    this.map.addListener('bounds_changed', function() {
+      searchBox.setBounds(this.map.getBounds());
+    });
   }
   
   centerMap(){    
@@ -122,7 +142,8 @@ export class HomePage {
     )
     .subscribe( data => {
       setTimeout(() =>{
-        this.actualUbication = {lat: data.coords.latitude, lng: data.coords.longitude};        
+        //this.actualUbication = {lat: data.coords.latitude, lng: data.coords.longitude};        
+        this.actualUbication = {lat: this.map.center.lat(), lng:this.map.center.lng()}
         this.setUserMarker();
         this.getNearestLocation();
       });
@@ -248,6 +269,7 @@ export class HomePage {
       .then((result: NativeGeocoderResult[]) => {
         info = result[0];      
         headers.map((header)=> {  
+          
           this.dataUbication.push(info[header]);        
         });  
         this.loadIndicators();
@@ -470,6 +492,7 @@ export class HomePage {
   }
 
   getLocations(country,department,city){    
+
     var arrayLocalities = [];
     var countryRef = this.db.collection("countries");
     countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country).where('country', '<=', country+ '\uf8ff'));
@@ -480,7 +503,7 @@ export class HomePage {
         countryObj.ref.collection("departments").where('department', '>=', department).where('department', '<=', department+ '\uf8ff').get().then((querySnapshot) => {      
           querySnapshot.forEach(cityObj => {
             cityObj.ref.collection("cities").where('city', '>=', city).where('city', '<=', city+ '\uf8ff').get().then((querySnapshot) => {      
-              querySnapshot.forEach(localityObj => {                
+              querySnapshot.forEach(localityObj => {
                 localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                            
                   querySnapshot.forEach(locality => {
                     arrayLocalities.push(locality.data());
