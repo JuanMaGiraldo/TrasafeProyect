@@ -73,21 +73,34 @@
   margin-left: 0px;
 }
 
-.lowRisk{
+.lowTheftRisk{
   color: white;
   background-color: green;
-  font-weight: bold;
 }
 
-.mediumRisk{
+.mediumTheftRisk{
   color:black;
   background-color: yellow;
-  font-weight: bold;
 }
 
-.highRisk{
+.highTheftRisk{
   color:white;
   background-color: red;
+}
+
+.highTerrorismRisk{
+  color:white;
+  background-color: black;
+}
+
+.lowTerrorismRisk{
+  color: black;
+  background-color: #8393F1;  
+}
+
+.highTheftRisk, .highTerrorismRisk, .mediumTheftRisk, .lowTheftRisk, .lowTerrorismRisk{
+  padding-left: 5px;
+  padding-right: 5px;
   font-weight: bold;
 }
 
@@ -103,6 +116,8 @@
   align-items: center;
   overflow: hidden; 
   text-align: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
   border-bottom: 0.1px solid rgb(190, 189, 189);  
 }
 

@@ -28,11 +28,13 @@
       <span class = "share" >Dejar de compartir</span>  
     </div>
     <div *ngIf = "!isSharingLocation" class = "noshare-location"  (click) = "shareLocationClick()">
-      <img  class = "alertImages" src='../../assets/icon/noshare-location.png'>
+      <img  class = "alertImages" src='../../assets/icon/noshare-location.png' >
       <span class = "share">Compartir ubicación</span>  
     </div>    
     <div class = "divUserZone" >
-      <span id = "indicatorUbication" >{{userZone}}</span>
+      <span id = "indicatorTheft">{{userTheftZone}}</span>
+      <span id = "divisor" style = "padding-right: 10px;"></span>
+      <span id = "indicatorTerrorism">{{userTerrorismZone}}</span>
     </div>
     <span style = "display:none;">{{trackingUbication}} </span>
     <span>{{console}}</span>

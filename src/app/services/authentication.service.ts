@@ -26,19 +26,14 @@ export class AuthenticationService {
    }
   
    async loginUser(value){
-     await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-     .then(function(){
+     
       return new Promise<any>((resolve, reject) => {
         firebase.auth().signInWithEmailAndPassword(value.email, value.password)
         .then(
           res => resolve(res),
           err => reject(err))
-      })
-     })
-     .catch(function(error){
-       var errorMessage = error.errorMessage;
-     });
-     return null;    
+      });
+       
    }
   
    logoutUser(){

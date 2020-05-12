@@ -25,10 +25,14 @@ export class LoginPage implements OnInit {
     private storage: Storage,
     private firebaseService: FirebaseServiceService
  
-  ) { }
+  ) { 
+
+    this.verifyUser();
+
+  }
  
   ngOnInit() {
-    this.verifyUser();
+    
 
     this.validations_form = this.formBuilder.group({
       email: new FormControl('', Validators.compose([
@@ -36,21 +40,19 @@ export class LoginPage implements OnInit {
         Validators.pattern('^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$')
       ])),
       password: new FormControl('', Validators.compose([
-        Validators.minLength(5),
+        Validators.minLength(6),
         Validators.required
       ])),
     });
   }
 
   async verifyUser(){
-    var user = firebase.auth().currentUser; 
-    if (user) {      
-      await this.storage.set('uid', user.uid);
-      console.log("Firebase logueado "+ user.uid);
-      await this.navCtrl.navigateForward('/home');
-    }else{
-      
-    } 
+    this.storage.get('uid').then((val) => {
+      if(val != null && val != ""){
+        this.navCtrl.navigateRoot('/home');
+      }
+    });
+    
   }
  
  
@@ -61,15 +63,18 @@ export class LoginPage implements OnInit {
     ],
     'password': [
       { type: 'required', message: 'Password is required.' },
-      { type: 'minlength', message: 'Password must be at least 5 characters long.' }
+      { type: 'minlength', message: 'Password must be at least 6 characters long.' }
     ]
   };
  
  
-  loginUser(value){
+  async loginUser(value){
     this.authService.loginUser(value)
-    .then(res => {              
-      this.verifyUser();
+    .then(res => {        
+      if(res){
+        this.storage.set('uid',res.user.uid);        
+        this.goToApplication();
+      }
     }, err => {
       this.errorMessage = err.message;      
     });    
@@ -77,6 +82,10 @@ export class LoginPage implements OnInit {
  
   goToRegisterPage(){
     this.navCtrl.navigateForward('/register');
+  }
+
+  goToApplication(){
+    this.navCtrl.navigateForward('/home');
   }
 
 }

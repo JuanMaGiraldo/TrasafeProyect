@@ -31,7 +31,8 @@ export class HomePage {
   lastSafe: Date;
   dontAskAgain: Boolean;
   srcIndicator: string;
-  userZone: string;
+  userTheftZone: string;
+  userTerrorismZone: string;
   actualUbication: any;
   mapOptions: any;
   isTracking: boolean;
@@ -167,37 +168,37 @@ export class HomePage {
 
   loadLocalities(dataset,query){  
     dataset.forEach(element => {
-      this.createIndicator(query , element.location, element.ranking);
+      this.createIndicator(query , element.location, element.theftId, element.terrorismId);
     });
   }
   
-  createIndicator(query, location ,indicator){        
+  createIndicator(query, location, theftId = "", terrorismId = ""){        
     if( query != null && query != "" && location != null && location != ""){
     query += " " + location;
     this.nativeGeocoder.forwardGeocode(query, this.options)
     .then((result: NativeGeocoderResult[]) =>{      
         var lat = parseFloat(result[0].latitude);
         var long = parseFloat(result[0].longitude);
-        var marker = new Marker({lat: lat, lng: long}, location, indicator);        
+        var marker = new Marker({lat: lat, lng: long}, location, theftId, terrorismId);        
         this.arrayMarkers.push(marker);
-        this.createMarker(lat, long, indicator,location,"body");      
+        this.createMarker(lat, long, theftId, terrorismId, location,"body");      
     })
     .catch((error: any) => this.error += "Error in create indicator: " + error);
     }
   }
   
-  createMarker(lat,long, indicator = null, title = "", body = ""){
+  createMarker(lat,long, theftId = "", terrorismId = "", title = "", body = ""){
     
     var marker;
     var myLatLng = null;
     var map = this.map;
     
 
-    if(lat != null && long != null && indicator != null && typeof indicator != 'undefined'){
+    if(lat != null && long != null && theftId != null && typeof theftId != 'undefined'){
           
       myLatLng = {lat: lat, lng: long};
       
-    if(indicator == "user"){
+    if(theftId == "user"){
       if(this.lastTrackUbication != null && lat == this.lastTrackUbication["lat"] && long == this.lastTrackUbication["lng"]){
         return;
       }
@@ -220,16 +221,16 @@ export class HomePage {
 
         var contentCard = '<div id="content">';
         contentCard += ( title ? '<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">'+title+'</h1>' : "");
-        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>'+ indicator +'</div>' : "");
+        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>'+ theftId +'</div>' : "");
         contentCard += '</div>';
       
         var infowindow = new google.maps.InfoWindow({
           content: contentCard
         });
 
-        indicator = String(indicator);
+        theftId = String(theftId);
 
-        var url = this.getIcon(indicator);
+        var url = this.getIcon(theftId);
         
         marker = new google.maps.Marker({
           position: myLatLng,
@@ -244,18 +245,30 @@ export class HomePage {
             marker.setAnimation(null);
           }, 2000);
         });
-          
-          var cityCircle = new google.maps.Circle({
-            strokeColor: '#DAD7D6',
-            strokeOpacity: 0.8,
-            strokeWeight: 1,
-            fillColor: this.getColor(indicator),
-            fillOpacity: 0.35,
-            map: map,
-            center: myLatLng,
-            radius: 70
-          });
-        
+          if(theftId != ""){
+            var cityCircle = new google.maps.Circle({
+              strokeColor: '#DAD7D6',
+              strokeOpacity: 0.8,
+              strokeWeight: 1,
+              fillColor: this.getColor(theftId,"theft"),
+              fillOpacity: 0.35,
+              map: map,
+              center: myLatLng,
+              radius: 70
+            });
+          }
+
+          if(terrorismId != ""){
+            var cityCircle = new google.maps.Circle({
+              strokeColor: this.getColor(terrorismId,"terrorism"),
+              strokeOpacity: 1,
+              strokeWeight: 3,
+              fillOpacity: 0,
+              map: map,
+              center: myLatLng,
+              radius: 70
+            });
+          }
       }
       }
     }      
@@ -284,7 +297,7 @@ export class HomePage {
     var nearMarker;
     var userLat = this.actualUbication["lat"];
     var userLong = this.actualUbication["lng"];
-
+    
     this.arrayMarkers.map((marker) =>{      
       var coord = marker.coords;
       var distance = Math.sqrt(Math.pow(coord.lat - userLat,2) + Math.pow(coord.lng - userLong,2));
@@ -300,21 +313,45 @@ export class HomePage {
     ];
 
     this.createLineBetweenPoints(path);   
+    this.userTerrorismZone = "";
+    this.userTheftZone= "";
+    this.displayElement("indicatorTheft","none");
+    this.displayElement("indicatorTerrorism","none");
+    var infoToShow = 0;
+
+    if(nearMarker.theftId != ""){
+      var infoTheft = this.getMessage(nearMarker.theftId,"theft");      
+      this.userTheftZone = infoTheft[0];
+      (<HTMLInputElement> document.getElementById("indicatorTheft")).className = infoTheft[1];      
+      infoToShow += 1;
+      this.displayElement("indicatorTheft","inline");
+    }
     
-    var info = this.getMessage(nearMarker.indicator);
-    this.userZone = info[0];
-    (<HTMLInputElement> document.getElementById("indicatorUbication")).className = info[1]
-    if(!this.isShowingMessage && !this.dontAskAgain && nearMarker.indicator == 1 && !this.isSharingLocation && this.askAlertAgain()){
+    if(nearMarker.terrorismId != ""){
+      var infoTerrorism = this.getMessage(nearMarker.terrorismId,"terrorism");
+      this.userTerrorismZone = infoTerrorism[0];      
+      (<HTMLInputElement> document.getElementById("indicatorTerrorism")).className = infoTerrorism[1];      
+      infoToShow += 1;
+      this.displayElement("indicatorTerrorism","inline");
+    }
+
+    (<HTMLInputElement> document.getElementById("divisor")).style.display = (infoToShow == 2 ? "inline" : "none" );    
+    
+    if(!this.isShowingMessage && !this.dontAskAgain && nearMarker.theftId == 1 && !this.isSharingLocation && this.askAlertAgain()){
       this.isShowingMessage = true;
       this.notifyAlert();
     }
     
-    if(!this.isShowingMessage && !this.dontAskAgain && nearMarker.indicator != 1 && this.isSharingLocation && this.askSafeAgain()){
+    if(!this.isShowingMessage && !this.dontAskAgain && nearMarker.theftId != 1 && this.isSharingLocation && this.askSafeAgain()){
       this.isShowingMessage = true;
       this.notifySafe();
     }
   }
   
+  displayElement(element, type){
+    (<HTMLInputElement> document.getElementById(element)).style.display = type;
+  }
+
   async shareUbication(){
     var uid = this.authService.getActualUser();
     var i = 1;
@@ -464,26 +501,46 @@ export class HomePage {
     }
   }
 
-  getColor(indicator){
-    switch (indicator){
-      case "3":
-        return 'green';
-      case "2":
-        return 'yellow';
-      case "1":
-       return 'red';
+  getColor(indicator,key){
+    if(key == "theft"){
+      switch (indicator){
+        case "3":
+          return 'green';
+        case "2":
+          return 'yellow';
+        case "1":
+         return 'red';
+      }
+    }else{
+      switch (indicator){        
+        case "1":
+          return "black";
+        case "3":
+          return "#8393F1";
+      }
     }
+    
+    
   }
 
-  getMessage(indicator){
-    indicator = String(indicator);
-    switch (indicator){
-      case "3":
-        return ['Zona de bajo riesgo','lowRisk'];
-      case "2":
-        return ['Zona de medio riesgo','mediumRisk'];
-      case "1":
-       return ['Zona de alto riesgo','highRisk'];
+  getMessage(indicator,type){
+    indicator = String(indicator);    
+    if(type == "theft"){
+      switch (indicator){
+        case "3":
+          return ['Riesgo hurto: bajo','lowTheftRisk'];
+        case "2":
+          return ['Riesgo hurto: medio','mediumTheftRisk'];
+        case "1":
+         return ['Riesgo hurto: alto','highTheftRisk'];
+      }
+    }else{
+      switch (indicator){
+        case "3":
+          return ['Riesgo terrorismo: bajo','lowTerrorismRisk'];
+        case "1":
+         return ['Riesgo terrorismo: alto','highTerrorismRisk'];
+      }
     }
   } 
 
@@ -516,7 +573,5 @@ export class HomePage {
         });
       });
     });        
-  }
-
- 
+  } 
 }
