@@ -8,7 +8,12 @@ import { AngularFirestore } from '@angular/fire/firestore';
 import { AuthenticationService } from '../services/authentication.service';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-
+import { Storage } from '@ionic/storage';
+import { AngularFireDatabase } from '@angular/fire/database';
+import { Country, Department, City, Location } from '../models/country';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from "rxjs/operators";
 declare var google;
 
 @Component({
@@ -45,6 +50,8 @@ export class HomePage {
   arrayLocalities: any[];
   localitiesLoaded: string[];
   placetoSearch: string = "";
+  uid: string = "";
+  markerShareUbication: any = null;
   private options: NativeGeocoderOptions = {
     useLocale: true,
     maxResults: 5
@@ -55,9 +62,12 @@ export class HomePage {
     private geolocation: Geolocation,
     private nativeGeocoder: NativeGeocoder,
     private alertController: AlertController,
-    private firebasService: FirebaseServiceService,
+    private firebaseService: FirebaseServiceService,
     private authService: AuthenticationService,
     private db: AngularFirestore,
+    private af: AngularFireDatabase,
+    private storage: Storage,
+    private _http: HttpClient
 
     ) {
     this.mapOptions = {      
@@ -75,6 +85,14 @@ export class HomePage {
     this.actualUbication = null;
     this.trackingUbication = "";
     this.localitiesLoaded = [];
+    this.getUid();
+    this.getGeoCodefromGoogleAPI("Armenia quindio el placer").subscribe(addressData => {
+      let lat: string = addressData.results[0].geometry.location.lat;
+      let long: string = addressData.results[0].geometry.location.lng;
+      console.log("Geo:",lat,long);
+     });
+    
+   // this.getLocations("c","Quindio","Armenia");
   }
   
   ngOnInit() {}
@@ -82,6 +100,8 @@ export class HomePage {
   ngAfterViewInit(){    
     this.loadMap();
   }
+
+ 
 
   async loadMap() {
     this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);    //create the map
@@ -93,17 +113,17 @@ export class HomePage {
     
     var place = this.placetoSearch;
 
-    if( place != null && place != "" ){      
-      this.nativeGeocoder.forwardGeocode(place, this.options)
-      .then((result: NativeGeocoderResult[]) =>{      
-          var lat = parseFloat(result[0].latitude);
-          var long = parseFloat(result[0].longitude);
-          this.map.setCenter({lat: lat, lng: long});
-          this.map.setZoom(17);     
-          this.getAddressFromCoords(lat,long);
-      })
-      .catch((error: any) => this.error += "Error in search info place: " + error);
-      }
+    if( place != null && place != "" ){   
+      
+      this.getGeoCodefromGoogleAPI(place).subscribe(addressData => {
+        console.log("Address",addressData.results[0]);
+        let lat: string = addressData.results[0].geometry.location.lat;
+        let long: string = addressData.results[0].geometry.location.lng;
+        this.map.setCenter({lat: lat, lng: long});
+        this.map.setZoom(17);     
+        this.getAddressFromCoords(lat,long);
+       });
+    }
     
   }
   initAutocomplete() {
@@ -166,28 +186,41 @@ export class HomePage {
     }
   }
 
-  loadLocalities(dataset,query){  
-    dataset.forEach(element => {
-      this.createIndicator(query , element.location, element.theftId, element.terrorismId);
-    });
-  }
-  
-  createIndicator(query, location, theftId = "", terrorismId = ""){        
-    if( query != null && query != "" && location != null && location != ""){
-    query += " " + location;
-    this.nativeGeocoder.forwardGeocode(query, this.options)
-    .then((result: NativeGeocoderResult[]) =>{      
-        var lat = parseFloat(result[0].latitude);
-        var long = parseFloat(result[0].longitude);
-        var marker = new Marker({lat: lat, lng: long}, location, theftId, terrorismId);        
-        this.arrayMarkers.push(marker);
-        this.createMarker(lat, long, theftId, terrorismId, location,"body");      
-    })
-    .catch((error: any) => this.error += "Error in create indicator: " + error);
+  loadLocalities(dataset:Location[],query){  
+
+    this.console += "Query: " + query;
+    for(let location of dataset){
+      this.createIndicator(query , location);
     }
   }
   
-  createMarker(lat,long, theftId = "", terrorismId = "", title = "", body = ""){
+  createIndicator(query, location){        
+    if( query != null && query != "" && location != null && location.location != ""){
+    query += " " + location.location; 
+    if(this.compareStrings("EL PLACER",location.location)){
+      this.console = "El placer"
+    }
+    this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
+      console.log("Address",addressData.results[0]);
+      let lat: string = addressData.results[0].geometry.location.lat;
+      let long: string = addressData.results[0].geometry.location.lng;
+      var marker = new Marker({lat: lat, lng: long}, location.location, location.theftId, location.terrorismId);        
+      this.arrayMarkers.push(marker);
+      if(this.compareStrings("El placer",location.location)){
+        this.console += location.location +" "+ lat +" "+ long+" - ";
+      }
+      
+      this.createMarker(lat, long, location.theftId, location.terrorismId, location.theftRating, location.terrorismRating, location.location,"body");      
+     });
+    }
+  }
+
+  getGeoCodefromGoogleAPI(address: string): Observable<any> {
+    return this._http.get('https://maps.googleapis.com/maps/api/geocode/json?address=' + address+"&key=AIzaSyDzQIvZVyTi7pfm2sIg4u81vmqGx4SBF3c");      
+  }
+  
+  
+  createMarker(lat,long, theftId = "", terrorismId = "", theftRating = "", terrorismRating = "", title = "", body = ""){
     
     var marker;
     var myLatLng = null;
@@ -197,8 +230,17 @@ export class HomePage {
     if(lat != null && long != null && theftId != null && typeof theftId != 'undefined'){
           
       myLatLng = {lat: lat, lng: long};
-      
-    if(theftId == "user"){
+    if(theftId == "ubication"){
+      if(this.markerShareUbication){
+        this.markerShareUbication.setMap(null);
+      }
+      marker = new google.maps.Marker({
+        position: myLatLng,
+        map: map
+      });
+      this.markerShareUbication = marker;
+    }
+    else if(theftId == "user"){
       if(this.lastTrackUbication != null && lat == this.lastTrackUbication["lat"] && long == this.lastTrackUbication["lng"]){
         return;
       }
@@ -222,6 +264,9 @@ export class HomePage {
         var contentCard = '<div id="content">';
         contentCard += ( title ? '<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">'+title+'</h1>' : "");
         contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>'+ theftId +'</div>' : "");
+        contentCard += ( body  ? '<div id="bodyContent"> <strong>Número de hurtos: </strong>'+ theftRating +'</div>' : "");
+        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>'+ terrorismId +'</div>' : "");
+        contentCard += ( body  ? '<div id="bodyContent"> <strong>Número de atentados: </strong>'+ terrorismRating +'</div>' : "");
         contentCard += '</div>';
       
         var infowindow = new google.maps.InfoWindow({
@@ -353,17 +398,17 @@ export class HomePage {
   }
 
   async shareUbication(){
-    var uid = this.authService.getActualUser();
+    
     var i = 1;
     if(this.isSharingLocation){
-      this.firebasService.saveNewUbication(JSON.stringify(this.actualUbication),uid);      
+      this.firebaseService.saveNewUbication(JSON.stringify(this.actualUbication),this.uid);      
     }
     var interval = setInterval(() => {      
       if(!this.isSharingLocation || i == 20){
        clearInterval(interval); 
       }
       else{
-        this.firebasService.saveNewUbication(JSON.stringify(this.actualUbication),uid);
+        this.firebaseService.saveNewUbication(JSON.stringify(this.actualUbication),this.uid);
       }      
     }, 5000);   
   }
@@ -498,6 +543,8 @@ export class HomePage {
        return '../../assets/icon/red-dot.png';
       case "user":
        return '../../assets/icon/user.png';
+       default:
+         return '../../assets/icon/blue-dot.png';
     }
   }
 
@@ -519,8 +566,23 @@ export class HomePage {
           return "#8393F1";
       }
     }
-    
-    
+  }
+
+  async showLastUbication(ubication){
+   
+    ubication = JSON.parse(ubication);
+    if(ubication != null && ubication != ""){
+      this.createMarker(ubication["lat"],ubication["lng"],"ubication");
+    }
+  }
+
+  getLastUbication(){
+    var userRef = this.db.collection("/users").doc(this.uid);
+   
+    userRef.valueChanges()
+    .subscribe(res => {
+      this.showLastUbication(res["ubication"]);
+    });
   }
 
   getMessage(indicator,type){
@@ -548,30 +610,61 @@ export class HomePage {
     this.createMarker(this.actualUbication.lat,this.actualUbication.lng, "user");
   }
 
+  getUid(){
+    this.storage.get('uid').then((val) => {
+      if(val != null && val != ""){
+        this.uid = val;
+      }
+    });
+  }
+  
+  async getLocationsFirebase(country, department, city){
+    this.af.list("/").valueChanges().subscribe(val => {
+      var countryInfo: Country = new Country(val[0],val[1]);   
+      this.console += "Loaded from firebase";   
+      this.storage.set("locationsArray",countryInfo);
+      this.getLocationsInfo(countryInfo,department, city);      
+    });
+  }
+  
   getLocations(country,department,city){    
 
-    var arrayLocalities = [];
-    var countryRef = this.db.collection("countries");
-    countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country).where('country', '<=', country+ '\uf8ff'));
-    countryRef.get()
-    .toPromise()
-    .then((querySnapshot) => {      
-      querySnapshot.forEach((countryObj) => {
-        countryObj.ref.collection("departments").where('department', '>=', department).where('department', '<=', department+ '\uf8ff').get().then((querySnapshot) => {      
-          querySnapshot.forEach(cityObj => {
-            cityObj.ref.collection("cities").where('city', '>=', city).where('city', '<=', city+ '\uf8ff').get().then((querySnapshot) => {      
-              querySnapshot.forEach(localityObj => {
-                localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                            
-                  querySnapshot.forEach(locality => {
-                    arrayLocalities.push(locality.data());
-                  });
-                  this.loadLocalities(arrayLocalities, country +" "+ department+" "+ city);
-                });
-              });      
-            });
-          });      
-        });
-      });
-    });        
+    this.storage.get("locationsArray").then((res) =>{
+      var countryInfo: Country;
+       if(res != null && res != ""){
+         countryInfo = res;
+         this.console += "Loaded from store";
+         this.getLocationsInfo(countryInfo,department, city);   
+       }else{
+          this.getLocationsFirebase(country,department,city);
+       }
+    });      
   } 
+  
+  getLocationsInfo(country,departmentQuery,cityQuery){ 
+       
+    var departments: Department[] = country.departments;
+    for(var department of departments){
+      if(this.compareStrings(department.department,departmentQuery)){
+          var cities: City[] = department.cities;
+          for(var city of cities){
+              if(this.compareStrings(city.city,cityQuery)){
+                  this.loadLocalities(city.locations, country +" "+ departmentQuery+" "+ cityQuery); 
+              }
+          }
+      }
+    }
+  }
+
+  compareStrings(var1, var2){
+      var1 = this.removeAccents(var1);
+      var2 = this.removeAccents(var2);
+      return (var1 == var2);
+  }
+
+  removeAccents(str){
+    str = str.toUpperCase();
+    str = str.trim();
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+} 
 }

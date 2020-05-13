@@ -39,6 +39,8 @@ export class FirebaseServiceService {
     return "";
   }
 
+  
+
   saveNewUbication(ubication, uid){
     
     this.db.collection("/users").doc(uid).update({

@@ -38,7 +38,7 @@ export class RegisterPage implements OnInit {
   ) {}
  
   ngOnInit(){
-    this.firebaseService.readUsers();
+    
     this.validations_form = this.formBuilder.group({
       user: new FormControl('',Validators.compose([
         Validators.required,

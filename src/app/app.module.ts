@@ -19,6 +19,7 @@ import { AngularFireModule } from '@angular/fire';
 import { Geolocation } from '@ionic-native/geolocation/ngx';
 import { NativeGeocoder } from '@ionic-native/native-geocoder/ngx';
 import { IonicStorageModule } from '@ionic/storage';
+import { HttpClientModule } from '@angular/common/http';
 
 import * as firebase from 'firebase';
 firebase.initializeApp(environment.firebase);
@@ -28,13 +29,13 @@ firebase.initializeApp(environment.firebase);
   entryComponents: [],
   imports: [
     BrowserModule, 
+    HttpClientModule,
     IonicModule.forRoot(), 
     IonicStorageModule.forRoot(),
     AppRoutingModule, 
     AngularFireAuthModule, 
     AngularFireDatabaseModule,
-    AngularFireModule.initializeApp(environment.firebase)],
-    
+    AngularFireModule.initializeApp(environment.firebase)],    
   providers: [
     StatusBar,
     SplashScreen,
