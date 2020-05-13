@@ -13,7 +13,7 @@ import { AngularFireDatabase } from '@angular/fire/database';
 import { Country, Department, City, Location } from '../models/country';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from "rxjs/operators";
+
 
 declare var google;
 
@@ -32,10 +32,10 @@ export class HomePage {
   line: any;
   areIndicatorsLoaded : boolean = false;
   arrayMarkers: Marker[] = [];
-  isSharingLocation: Boolean;
+  isSharingLocation: boolean;
   lastAlert: Date;
   lastSafe: Date;
-  dontAskAgain: Boolean;
+  dontAskAgain: boolean;
   srcIndicator: string;
   userTheftZone: string;
   userTerrorismZone: string;
@@ -268,7 +268,8 @@ export class HomePage {
       }
       marker = new google.maps.Marker({
         position: myLatLng,
-        map: map
+        map: map,
+        icon: this.getIcon("ubication")
       });
       this.markerShareUbication = marker;
     }
@@ -323,7 +324,7 @@ export class HomePage {
           }, 2000);
         });
           if(theftId != ""){
-            var cityCircle = new google.maps.Circle({
+            new google.maps.Circle({
               strokeColor: '#DAD7D6',
               strokeOpacity: 0.8,
               strokeWeight: 1,
@@ -336,7 +337,7 @@ export class HomePage {
           }
 
           if(terrorismId != ""){
-            var cityCircle = new google.maps.Circle({
+            new google.maps.Circle({
               strokeColor: this.getColor(terrorismId,"terrorism"),
               strokeOpacity: 1,
               strokeWeight: 3,
@@ -358,10 +359,9 @@ export class HomePage {
     this.nativeGeocoder.reverseGeocode(lattitude, longitude, this.options)
       .then((result: NativeGeocoderResult[]) => {
         info = result[0];      
-        headers.map((header)=> {  
-          
-          this.dataUbication.push(info[header]);        
-        });  
+        for(var header of headers){
+          this.dataUbication.push(info[header]);   
+        }
         this.loadIndicators();
       })
       .catch((error: any) =>{         
@@ -375,14 +375,14 @@ export class HomePage {
     var userLat = this.actualUbication["lat"];
     var userLong = this.actualUbication["lng"];
     
-    this.arrayMarkers.map((marker) =>{      
+    for(var marker of this.arrayMarkers){
       var coord = marker.coords;
       var distance = Math.sqrt(Math.pow(coord.lat - userLat,2) + Math.pow(coord.lng - userLong,2));
       if(nearDistance == null || nearDistance > distance ){
         nearDistance = distance;
         nearMarker = marker;        
       }
-    });
+    }           
 
     var path =  [
       {lat: parseFloat(nearMarker.coords.lat), lng: parseFloat(nearMarker.coords.lng)},
@@ -591,6 +591,8 @@ export class HomePage {
        return '../../assets/icon/red-dot.png';
       case "user":
        return '../../assets/icon/user.png';
+      case "ubication":
+       return '../../assets/icon/man.png';
        default:
          return '../../assets/icon/blue-dot.png';
     }

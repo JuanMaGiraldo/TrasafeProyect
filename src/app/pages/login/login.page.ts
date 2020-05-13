@@ -3,9 +3,6 @@ import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms'
 import { NavController } from '@ionic/angular';
 import { AuthenticationService } from '../../services/authentication.service';
 import { Storage } from '@ionic/storage';
-import { FirebaseServiceService } from '../../services/firebase-service.service';
-import * as firebase from 'firebase';
-
 
 @Component({
   selector: 'app-login',
@@ -22,8 +19,7 @@ export class LoginPage implements OnInit {
     private navCtrl: NavController,
     private authService: AuthenticationService,
     private formBuilder: FormBuilder,
-    private storage: Storage,
-    private firebaseService: FirebaseServiceService
+    private storage: Storage
  
   ) { 
 

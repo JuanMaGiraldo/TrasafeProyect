@@ -24,11 +24,11 @@
   
   <div class = "info-user">       
     <div *ngIf = "isSharingLocation" class ="share-location"  (click) = "shareLocationClick()">
-      <img  class = "alertImages" src='../../assets/icon/share-location.png' >      
+      <img  class = "alertImages" src='../../assets/icon/share-location.png' alt = 'compartiendo ubicacion'>      
       <span class = "share" >Dejar de compartir</span>  
     </div>
     <div *ngIf = "!isSharingLocation" class = "noshare-location"  (click) = "shareLocationClick()">
-      <img  class = "alertImages" src='../../assets/icon/noshare-location.png' >
+      <img  class = "alertImages" src='../../assets/icon/noshare-location.png'alt = 'no compartiendo ubicación' >
       <span class = "share">Compartir ubicación</span>  
     </div>    
     <div class = "divUserZone" >

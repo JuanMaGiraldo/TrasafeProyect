@@ -42,10 +42,6 @@ export class FirebaseServiceService {
     return "";
   }
 
-  
-
-  
-
   saveNewUbication(ubication, uid){
     
     this.db.collection("/users").doc(uid).update({
@@ -69,29 +65,4 @@ export class FirebaseServiceService {
     })    
   }
 
-  getLocations(country,department,city){
-    var arrayLocalities = [];
-    var countryRef = this.db.collection("countries");
-    countryRef = this.db.collection('/countries', ref => ref.where('country', '>=', country));
-    countryRef.get()
-    .toPromise()
-    .then((querySnapshot) => {      
-      querySnapshot.forEach((countryObj) => {
-        countryObj.ref.collection("departments").where("department",">=",department).get().then((querySnapshot) => {      
-          querySnapshot.forEach(cityObj => {
-            cityObj.ref.collection("cities").where("city",">=",city).get().then((querySnapshot) => {      
-              querySnapshot.forEach(localityObj => {                
-                localityObj.ref.collection("locations").get().then((querySnapshot)=> {                                   
-                  querySnapshot.forEach(locality => {
-                    arrayLocalities.push(locality.data());                    
-                  });
-                });
-              });      
-            });
-          });      
-        });
-      });
-    });
-    return arrayLocalities;
-  }
 }
