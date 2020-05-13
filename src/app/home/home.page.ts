@@ -14,6 +14,7 @@ import { Country, Department, City, Location } from '../models/country';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from "rxjs/operators";
+
 declare var google;
 
 @Component({
@@ -52,6 +53,7 @@ export class HomePage {
   placetoSearch: string = "";
   uid: string = "";
   markerShareUbication: any = null;
+  idUser: string = "";
   private options: NativeGeocoderOptions = {
     useLocale: true,
     maxResults: 5
@@ -86,13 +88,7 @@ export class HomePage {
     this.trackingUbication = "";
     this.localitiesLoaded = [];
     this.getUid();
-    this.getGeoCodefromGoogleAPI("Armenia quindio el placer").subscribe(addressData => {
-      let lat: string = addressData.results[0].geometry.location.lat;
-      let long: string = addressData.results[0].geometry.location.lng;
-      console.log("Geo:",lat,long);
-     });
-    
-   // this.getLocations("c","Quindio","Armenia");
+       // this.getLocations("c","Quindio","Armenia");
   }
   
   ngOnInit() {}
@@ -100,8 +96,6 @@ export class HomePage {
   ngAfterViewInit(){    
     this.loadMap();
   }
-
- 
 
   async loadMap() {
     this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);    //create the map
@@ -186,9 +180,50 @@ export class HomePage {
     }
   }
 
+  async showInputIdUser(){
+    const alert = await this.alertController.create({
+      header: 'Ver ubicacion',
+      inputs: [
+        {
+          name: 'id',
+          placeholder: 'Ingrese el id del usuario a ver'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: data => {
+            console.log('Cancel clicked');
+          }
+        },
+        {
+          text: 'Login',
+          handler: data => {
+            this.confirmId(data.id);
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  confirmId(id){    
+    this.db.collection("/users", ref => ref.where('id','==',id)).valueChanges().subscribe(res => {
+      if(res && res[0] && res[0]["uid"]){
+        this.createAlert("Éxito!","Conexión éxitosa.");
+        this.getLastUbication(res[0]["uid"]);
+        console.log(res[0]["uid"]);
+      }else{
+        this.createAlert("Error","No se pudo encontrar el usuario, ingrese de nuevo el id.");
+        console.log("No enocntrado");
+      }
+      
+    });
+  }
+
   loadLocalities(dataset:Location[],query){  
 
-    this.console += "Query: " + query;
     for(let location of dataset){
       this.createIndicator(query , location);
     }
@@ -198,7 +233,7 @@ export class HomePage {
     if( query != null && query != "" && location != null && location.location != ""){
     query += " " + location.location; 
     if(this.compareStrings("EL PLACER",location.location)){
-      this.console = "El placer"
+      //this.console = "El placer"
     }
     this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
       console.log("Address",addressData.results[0]);
@@ -206,10 +241,7 @@ export class HomePage {
       let long: string = addressData.results[0].geometry.location.lng;
       var marker = new Marker({lat: lat, lng: long}, location.location, location.theftId, location.terrorismId);        
       this.arrayMarkers.push(marker);
-      if(this.compareStrings("El placer",location.location)){
-        this.console += location.location +" "+ lat +" "+ long+" - ";
-      }
-      
+            
       this.createMarker(lat, long, location.theftId, location.terrorismId, location.theftRating, location.terrorismRating, location.location,"body");      
      });
     }
@@ -453,6 +485,22 @@ export class HomePage {
     await alert.present();
   }
 
+  async createAlert(title,body){
+    const alert = await this.alertController.create({
+      header: title,
+      message: body,
+      buttons: [
+        {
+          text: 'Aceptar',
+          cssClass: 'primary',
+          handler: () => {
+          }
+        }
+      ] 
+    });
+
+    await alert.present();
+  }
 
   async notifyAlert() {
     const alert = await this.alertController.create({
@@ -576,12 +624,14 @@ export class HomePage {
     }
   }
 
-  getLastUbication(){
-    var userRef = this.db.collection("/users").doc(this.uid);
-   
+  getLastUbication(uid){
+    var userRef = this.db.collection("/users").doc(uid);   
     userRef.valueChanges()
     .subscribe(res => {
-      this.showLastUbication(res["ubication"]);
+      if(res && res["ubication"]){
+        this.showLastUbication(res["ubication"]);
+      }
+      
     });
   }
 
@@ -614,6 +664,7 @@ export class HomePage {
     this.storage.get('uid').then((val) => {
       if(val != null && val != ""){
         this.uid = val;
+        this.generateId();
       }
     });
   }
@@ -621,7 +672,6 @@ export class HomePage {
   async getLocationsFirebase(country, department, city){
     this.af.list("/").valueChanges().subscribe(val => {
       var countryInfo: Country = new Country(val[0],val[1]);   
-      this.console += "Loaded from firebase";   
       this.storage.set("locationsArray",countryInfo);
       this.getLocationsInfo(countryInfo,department, city);      
     });
@@ -633,7 +683,6 @@ export class HomePage {
       var countryInfo: Country;
        if(res != null && res != ""){
          countryInfo = res;
-         this.console += "Loaded from store";
          this.getLocationsInfo(countryInfo,department, city);   
        }else{
           this.getLocationsFirebase(country,department,city);
@@ -666,5 +715,16 @@ export class HomePage {
     str = str.toUpperCase();
     str = str.trim();
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-} 
+  }
+  
+  generateId() {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < 5; i++ ) {
+       result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    this.idUser = result;
+    this.firebaseService.saveNewId(result,this.uid);
+ } 
 }

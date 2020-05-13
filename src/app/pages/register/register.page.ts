@@ -17,16 +17,16 @@ export class RegisterPage implements OnInit {
  
   validation_messages = {
    'user':[
-     { type: 'required', message: 'User is required.' },
-     { type: 'pattern', message: 'Enter a valid User.' }
+     { type: 'required', message: 'Usuario es requerido.' },
+     { type: 'pattern', message: 'Ingrese un usuario válido.' }
    ],
    'email': [
-     { type: 'required', message: 'Email is required.' },
-     { type: 'pattern', message: 'Enter a valid email.' }
+     { type: 'required', message: 'Email es requerido.' },
+     { type: 'pattern', message: 'Ingrese un email válido.' }
    ],
    'password': [
-     { type: 'required', message: 'Password is required.' },
-     { type: 'minlength', message: 'Password must be at least 6 characters long.' }
+     { type: 'required', message: 'Contraseña requerida.' },
+     { type: 'minlength', message: 'La contraseña debe de contener al menos 6 caracteres.' }
    ]
  };
  

@@ -1,0 +1,30 @@
+.contenido{
+    padding-left: 25px;
+    padding-right: 25px;
+}
+
+h1{
+    text-align: center;
+    text-decoration: underline black;
+}
+
+p{
+    text-align: justify;
+}
+
+.titles_header{
+    font-family: Arial;
+    color: #254B96;
+    font-weight: bold;
+    font-size: 24px;
+    float: right !important;
+    margin-right: 20px;
+    width: 100%;
+    text-align: right;
+}
+
+.div_title{
+    position: relative;
+    top: 7px;
+    width: 100%;
+}

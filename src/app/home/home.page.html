@@ -36,7 +36,15 @@
       <span id = "divisor" style = "padding-right: 10px;"></span>
       <span id = "indicatorTerrorism">{{userTerrorismZone}}</span>
     </div>
-    <ion-button (click)="getLastUbication()">Mostrar ubicacion</ion-button>
+
+    <div class="div_share_ubication">
+      <div class="div_id_user">
+        <span class = "id_user">{{idUser}} </span>
+      </div>
+      
+      <ion-button size="small" (click)="showInputIdUser()">Ver ubicacion</ion-button>
+    </div>
+    
 
     <span style = "display:none;">{{trackingUbication}} </span>
     <span>{{console}}</span>

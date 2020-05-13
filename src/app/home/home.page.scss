@@ -13,7 +13,7 @@
  
 #map {
   width: 100%;
-  height: 60vh;
+  height: 55vh;
 }
  
 .map-wrapper {
@@ -104,6 +104,25 @@
   font-weight: bold;
 }
 
+.id_user{  
+  color: #5b6bc3;
+    font-size: 20px;
+    padding: 6px;
+    margin-top: 13px;
+}
+
+.div_id_user{
+  border: 1px solid #5a5adf;
+  border-radius: 8px;
+  display: inline;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  position: relative;
+  top: 5px;
+  margin-right: 10px;
+}
+
+
 #indicatorUbication{  
   display: inline-block;
   margin-top: 5px;
@@ -120,6 +139,16 @@
   padding-bottom: 5px;
   border-bottom: 0.1px solid rgb(190, 189, 189);  
 }
+
+.div_share_ubication{
+  display: block;
+  align-items: center;
+  overflow: hidden; 
+  text-align: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
 
 .div-optios{
   display:grid;

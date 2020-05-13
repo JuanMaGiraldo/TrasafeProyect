@@ -19,7 +19,8 @@ export class FirebaseServiceService {
     return new Promise<any>((resolve,reject)=>{
         var users = this.db.collection("/users");
         users.doc(user.uid).set({
-          ubication:""
+          ubication:"",
+          uid:user.uid
         })
         .then(
           res => resolve(res),
@@ -27,6 +28,8 @@ export class FirebaseServiceService {
         )
     })
   }
+
+  
 
   getUser(){
     var val;
@@ -41,10 +44,20 @@ export class FirebaseServiceService {
 
   
 
+  
+
   saveNewUbication(ubication, uid){
     
     this.db.collection("/users").doc(uid).update({
       ubication: ubication
+    });
+    return uid;
+  }
+
+  saveNewId(id, uid){
+    
+    this.db.collection("/users").doc(uid).update({
+      id: id
     });
     return uid;
   }

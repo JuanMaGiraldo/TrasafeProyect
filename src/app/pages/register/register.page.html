@@ -1,14 +1,19 @@
 <ion-header>
-  <ion-toolbar color="primary">
-    <ion-title>Register</ion-title>
-  </ion-toolbar>
+  <ion-row>
+    <ion-col text-start>
+      <ion-title style = "color: #254B96; font-family: 'Yellowtail', cursive; font-size: 31px;">Trasafe</ion-title>
+    </ion-col>
+    <ion-col text-end>
+      <div class="div_title"><span class = "titles_header">Registro</span></div>
+    </ion-col>
+  </ion-row>
 </ion-header>
  
 <ion-content padding>
   <form class="form" [formGroup]="validations_form"  (ngSubmit)="tryRegister(validations_form.value)">
  
     <ion-item>
-      <ion-label  position="floating" color="primary">User</ion-label>
+      <ion-label  position="floating" color="primary">Usuario</ion-label>
       <ion-input type="text" formControlName="user"></ion-input>
     </ion-item>
     <div class="validation-errors">
@@ -33,7 +38,7 @@
     </div>
  
     <ion-item>
-      <ion-label  position="floating" color="primary">Password</ion-label>
+      <ion-label  position="floating" color="primary">Contraseña</ion-label>
       <ion-input type="password" formControlName="password" class="form-controll" required></ion-input>
     </ion-item>
     <div class="validation-errors">
@@ -45,10 +50,10 @@
     </div>
  
     <div class="button-center" style = "text-align: center;">
-      <ion-button  class="submit-btn" type="submit"  [disabled]="!validations_form.valid">Register</ion-button>
+      <ion-button  class="submit-btn" type="submit"  [disabled]="!validations_form.valid">Registrar</ion-button>
     </div>
     <label class="error-message">{{errorMessage}}</label>
     <label class="success-message">{{successMessage}}</label>
   </form>
-  <p class="go-to-login">Already have an account? <a (click)="goLoginPage()">Try to Log In.</a></p>
+  <p class="go-to-login">¿Tienes cuenta? <a (click)="goLoginPage()">Intenta ingresar.</a></p>
 </ion-content>
