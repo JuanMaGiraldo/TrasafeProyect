@@ -54,6 +54,7 @@ export class HomePage {
   uid: string = "";
   markerShareUbication: any = null;
   idUser: string = "";
+  flagExit: boolean = false;
   private options: NativeGeocoderOptions = {
     useLocale: true,
     maxResults: 5
@@ -211,7 +212,11 @@ export class HomePage {
   confirmId(id){    
     this.db.collection("/users", ref => ref.where('id','==',id)).valueChanges().subscribe(res => {
       if(res && res[0] && res[0]["uid"]){
-        this.createAlert("Éxito!","Conexión éxitosa.");
+        if(!this.flagExit){
+          this.createAlert("Éxito!","Conexión éxitosa.");
+          this.flagExit = true;
+        }
+        
         this.getLastUbication(res[0]["uid"]);
         console.log(res[0]["uid"]);
       }else{
