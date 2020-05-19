@@ -32,7 +32,7 @@ export class SettingsPage implements OnInit {
 
   async closeSession(){
     await this.storage.set("uid","");
-    this.authenticationService.logoutUser();
+    await this.authenticationService.logoutUser();
     this.navCtrl.navigateForward('/login');
   }
 

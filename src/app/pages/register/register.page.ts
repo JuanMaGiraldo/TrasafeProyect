@@ -60,7 +60,7 @@ export class RegisterPage implements OnInit {
      .then(res => {
        this.firebaseService.addUser(res.user);
        this.errorMessage = "";
-       this.successMessage = "Your account has been created. Please log in.";
+       this.successMessage = "Tú cuenta ha sido creada, intenta ingresar";
      }, err => {
        console.log(err);
        this.errorMessage = err.message;

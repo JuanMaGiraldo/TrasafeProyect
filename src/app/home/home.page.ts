@@ -89,7 +89,6 @@ export class HomePage {
     this.trackingUbication = "";
     this.localitiesLoaded = [];
     this.getUid();
-       // this.getLocations("c","Quindio","Armenia");
   }
   
   ngOnInit() {}
@@ -437,9 +436,11 @@ export class HomePage {
   async shareUbication(){
     
     var i = 1;
+    this.console += " uid:  ";
+    this.console += this.uid;
     if(this.isSharingLocation){
       this.firebaseService.saveNewUbication(JSON.stringify(this.actualUbication),this.uid);      
-    }
+    } // se repite esta linea debido a que el intervalo solo empieza a compartir a los 5 segundos
     var interval = setInterval(() => {      
       if(!this.isSharingLocation || i == 20){
        clearInterval(interval); 
@@ -668,9 +669,11 @@ export class HomePage {
   }
 
   getUid(){
+    console.log("uid");
     this.storage.get('uid').then((val) => {
       if(val != null && val != ""){
         this.uid = val;
+        console.log(val);
         this.generateId();
       }
     });

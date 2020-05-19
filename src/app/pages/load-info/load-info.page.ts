@@ -3,7 +3,6 @@ import { AngularFireDatabase } from '@angular/fire/database';
 import { Country, Department, City, Location } from '../../models/country';
 import { Storage } from '@ionic/storage';
 import { NavController } from '@ionic/angular';
-
 @Component({
   selector: 'app-load-info',
   templateUrl: './load-info.page.html',
@@ -24,7 +23,6 @@ export class LoadInfoPage implements OnInit {
 
   ngOnInit() {
     this.verifyInfo();
-
   }
 
   verifyInfo(){
@@ -34,27 +32,25 @@ export class LoadInfoPage implements OnInit {
       
        if(res != null && res != ""){        
         var countryInfo: Country = res;
-        console.log("Info ");
-        console.log(countryInfo);
-        console.log(countryInfo.departments.length == 32);
         if(countryInfo != null && countryInfo.departments.length == 32){
           info_loaded = true;
           this.goToMap();
         }   
        }
-    }); 
-    if(!info_loaded){
-      this.getLocationsFirebase();
-    }
+
+      if(!info_loaded){
+        this.getLocationsFirebase();
+      }
+    });     
   }
-  
 
   async getLocationsFirebase(){
     this.state = "Descargando los datos de la aplicación..."
- /*   this.af.list("/").valueChanges().subscribe(val => {
+    this.af.list("/").valueChanges().subscribe((val) => {
       var countryInfo: Country = new Country(val[0],val[1]);   
       this.saveDatabase(countryInfo);
-    });*/
+    },
+    (error) =>  this.state = "Error descargando los datos, verifique la conexión a Internet.");
   }
 
   async saveDatabase(countryInfo:Country){
@@ -63,13 +59,11 @@ export class LoadInfoPage implements OnInit {
       this.goToMap();
     }
     else{
-      this.state = "Error descargando los datos"
-      //this.getLocationsFirebase();
+      this.state = "Error descargando los datos, vuelve a abrir la aplicación."
     }    
   }
   
   goToMap(){
     this.navCtrl.navigateRoot('/home');
   }
-
 }
