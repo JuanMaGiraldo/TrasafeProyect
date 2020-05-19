@@ -1,6 +1,7 @@
 export class Country{
     country : string;
     departments: Department[];
+
     constructor(name,array){
         this.country = name;
         this.departments = [];

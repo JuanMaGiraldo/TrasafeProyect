@@ -45,7 +45,7 @@ export class LoginPage implements OnInit {
   async verifyUser(){
     this.storage.get('uid').then((val) => {
       if(val != null && val != ""){
-        this.navCtrl.navigateRoot('/home');
+        this.goToApplication();
       }
     });
     
@@ -81,7 +81,7 @@ export class LoginPage implements OnInit {
   }
 
   goToApplication(){
-    this.navCtrl.navigateForward('/home');
+    this.navCtrl.navigateForward('/loadinfo');
   }
 
 }

@@ -65,5 +65,9 @@ export class SettingsPage implements OnInit {
     });
   }
 
+  delete(){
+    this.storage.set("locationsArray",null);
+  }
+
   
 }
