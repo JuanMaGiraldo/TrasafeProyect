@@ -140,9 +140,7 @@ export class HomePage {
       this.actualUbication = {lat: coords.latitude, lng: coords.longitude};
       this.centerMap();    
       this.getAddressFromCoords(coords.latitude, coords.longitude);      
-      /*this.map.addListener('tilesloaded', () => {        
-        this.getAddressFromCoords(this.map.center.lat(), this.map.center.lng());        
-      });*/
+      
     }).catch((error) => {
       this.error =  "Error in where i am: "+  error;
     }); 
@@ -236,9 +234,6 @@ export class HomePage {
   createIndicator(query, location){        
     if( query != null && query != "" && location != null && location.location != ""){
     query += " " + location.location; 
-    if(this.compareStrings("EL PLACER",location.location)){
-      //this.console = "El placer"
-    }
     this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
       console.log("Address",addressData.results[0]);
       let lat: string = addressData.results[0].geometry.location.lat;
@@ -436,8 +431,6 @@ export class HomePage {
   async shareUbication(){
     
     var i = 1;
-    this.console += " uid:  ";
-    this.console += this.uid;
     if(this.isSharingLocation){
       this.firebaseService.saveNewUbication(JSON.stringify(this.actualUbication),this.uid);      
     } // se repite esta linea debido a que el intervalo solo empieza a compartir a los 5 segundos

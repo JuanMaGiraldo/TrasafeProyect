@@ -28,8 +28,7 @@ export class LoadInfoPage implements OnInit {
   verifyInfo(){
     var info_loaded = false;
     this.storage.get("locationsArray").then((res) =>{      
-      console.log("res",res);
-      
+            
        if(res != null && res != ""){        
         var countryInfo: Country = res;
         if(countryInfo != null && countryInfo.departments.length == 32){
@@ -51,7 +50,7 @@ export class LoadInfoPage implements OnInit {
       this.saveDatabase(countryInfo);
     },
     (error) =>  this.state = "Error descargando los datos, verifique la conexión a Internet.");
-  }
+  } 
 
   async saveDatabase(countryInfo:Country){
     if(countryInfo != null && countryInfo.departments.length == 32){

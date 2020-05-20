@@ -20,6 +20,7 @@ import { Geolocation } from '@ionic-native/geolocation/ngx';
 import { NativeGeocoder } from '@ionic-native/native-geocoder/ngx';
 import { IonicStorageModule } from '@ionic/storage';
 import { HttpClientModule } from '@angular/common/http';
+import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
 
 import * as firebase from 'firebase';
 firebase.initializeApp(environment.firebase);
@@ -42,6 +43,7 @@ firebase.initializeApp(environment.firebase);
     AuthenticationService,
     Geolocation,
     NativeGeocoder,
+    InAppBrowser,
     AngularFirestore,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
   ],

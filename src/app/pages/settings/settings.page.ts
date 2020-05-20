@@ -1,24 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
 import { Storage } from '@ionic/storage';
 import { AuthenticationService } from '../../services/authentication.service';
 import { NavController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/firestore';
+import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
+import { HomePageModule } from 'src/app/home/home.module';
 
-import { Router } from '@angular/router';
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.page.html',
   styleUrls: ['./settings.page.scss'],
 })
-export class SettingsPage implements OnInit {
 
+export class SettingsPage implements OnInit {
+  @ViewChild(HomePageModule, {static: false}) child;
   private uid: string;
   constructor(
 
     private storage: Storage,
     private authenticationService: AuthenticationService,
     private navCtrl: NavController,
-    private router: Router,    
+    private iab: InAppBrowser,
     private db: AngularFirestore,
     
 
@@ -33,6 +35,7 @@ export class SettingsPage implements OnInit {
   async closeSession(){
     await this.storage.set("uid","");
     await this.authenticationService.logoutUser();
+    await this.child.ngOnDestroy();
     this.navCtrl.navigateForward('/login');
   }
 
@@ -50,18 +53,17 @@ export class SettingsPage implements OnInit {
 
   getLastUbication(uid){
     var userRef = this.db.collection("/users").doc(uid);   
-    userRef.valueChanges()
+    var subscription = userRef.valueChanges()
     .subscribe(res => {
-      if(res && res["ubication"]){
-        
+      if(res && res["ubication"]){        
+        subscription.unsubscribe();
         var ubication = JSON.parse(res["ubication"]);
         console.log(ubication,uid);
         var lat = ubication["lat"];
         var long = ubication["lng"];
         var ruta =  "https://www.google.com/maps/search/?api=1&query="+lat+","+long;
-        console.log(ruta);
-      }
-      
+        this.iab.create(ruta,"_system");        
+      }      
     });
   }
 
