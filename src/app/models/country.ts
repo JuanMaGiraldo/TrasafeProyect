@@ -44,18 +44,15 @@ export class Location{
     terrorismId: string;
     theftRating: string;
     terrorismRating: string;
-    lat: string;
-    lng: string;
+    lat: string = "";
+    lng: string = "";
     constructor(location, theftId,terrorismId, theftRating,terrorismRating){
         this.location    = location;
         this.theftId     = theftId;
         this.terrorismId = terrorismId;
         this.theftRating = theftRating;
         this.terrorismRating = terrorismRating;
-    }
-    
-    loadLatLng(lat, lng){
-        this.lat = lat;
-        this.lng = lng;
+        this.lat = "";
+        this.lng = "";
     }
 }

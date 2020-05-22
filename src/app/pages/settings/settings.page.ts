@@ -1,19 +1,17 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Storage } from '@ionic/storage';
 import { AuthenticationService } from '../../services/authentication.service';
 import { NavController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
-import { HomePageModule } from 'src/app/home/home.module';
-
+import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.page.html',
   styleUrls: ['./settings.page.scss'],
 })
-
 export class SettingsPage implements OnInit {
-  @ViewChild(HomePageModule, {static: false}) child;
+
   private uid: string;
   constructor(
 
@@ -22,7 +20,7 @@ export class SettingsPage implements OnInit {
     private navCtrl: NavController,
     private iab: InAppBrowser,
     private db: AngularFirestore,
-    
+    private splashscreen: SplashScreen
 
     ) { 
 
@@ -35,7 +33,7 @@ export class SettingsPage implements OnInit {
   async closeSession(){
     await this.storage.set("uid","");
     await this.authenticationService.logoutUser();
-    await this.child.ngOnDestroy();
+    this.reload();
     this.navCtrl.navigateForward('/login');
   }
 
@@ -49,6 +47,11 @@ export class SettingsPage implements OnInit {
 
   showLastUbication(){
     this.getLastUbication(this.uid);
+  }
+
+  reload(){
+    this.splashscreen.show();
+    window.location.reload();
   }
 
   getLastUbication(uid){

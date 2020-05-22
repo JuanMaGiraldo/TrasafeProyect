@@ -42,12 +42,10 @@ export class FirebaseServiceService {
     return "";
   }
 
-  saveNewUbication(ubication, uid){
-    
+  saveNewUbication(ubication, uid){    
     this.db.collection("/users").doc(uid).update({
       ubication: ubication
     });
-    return uid;
   }
 
   saveNewId(id, uid){
