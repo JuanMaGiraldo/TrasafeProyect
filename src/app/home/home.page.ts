@@ -321,9 +321,9 @@ export class HomePage {
 
         var contentCard = '<div id="content">';
         contentCard += ( title ? '<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">'+title+'</h1>' : "");
-        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>'+ theftId +'</div>' : "");
+        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>'+ this.getTypeIndex(theftId) +'</div>' : "");
         contentCard += ( body  ? '<div id="bodyContent"> <strong>Número de hurtos: </strong>'+ theftRating +'</div>' : "");
-        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>'+ terrorismId +'</div>' : "");
+        contentCard += ( body  ? '<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>'+ this.getTypeIndex(terrorismId) +'</div>' : "");
         contentCard += ( body  ? '<div id="bodyContent"> <strong>Número de atentados: </strong>'+ terrorismRating +'</div>' : "");
         contentCard += '</div>';
       
@@ -747,6 +747,20 @@ export class HomePage {
     str = str.toUpperCase();
     str = str.trim();
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  getTypeIndex(index){
+    index = parseInt(index);
+    switch(index){
+      case 1:
+        return "Alto";
+      case 2:
+        return "Medio";
+      case 3:
+        return "Bajo";  
+      default:
+        return "Nulo";
+    }
   }
   
   generateId() {
