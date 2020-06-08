@@ -54,6 +54,7 @@ export class HomePage {
   uid: string = "";
   markerShareUbication: any = null;
   idUser: string = "";
+  idUserShow: string = "";
   flagExit: boolean = false;
   countryInfo: Country = null;
   locationsToUpdate: any;
@@ -185,19 +186,16 @@ export class HomePage {
       inputs: [
         {
           name: 'id',
-          placeholder: 'Ingrese el id del usuario a ver'
+          placeholder: 'Id del usuario que desea ver.'
         }
       ],
       buttons: [
         {
-          text: 'Cancel',
-          role: 'cancel',
-          handler: data => {
-            console.log('Cancel clicked');
-          }
+          text: 'Cancelar',
+          role: 'cancel'
         },
         {
-          text: 'Login',
+          text: 'Conectar',
           handler: data => {
             this.confirmId(data.id);
           }
@@ -246,14 +244,12 @@ export class HomePage {
     if( query != null && query != "" && location != null && location.location != ""){
       query += " " + location.location;       
       if(!this.isNullOrEmpty(location.lat) && !this.isNullOrEmpty(location.lng)){
-        console.log("Storage"); 
           let lat: string = location.lat;
           let long: string = location.lng;
           var marker = new Marker({lat: lat, lng: long}, location.location, location.theftId, location.terrorismId);        
           this.arrayMarkers.push(marker);              
           this.createMarker(lat, long, location.theftId, location.terrorismId, location.theftRating, location.terrorismRating, location.location,"body");              
       }else{
-        console.log("Google api");
         this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {        
           if(addressData && addressData.results[0]){
             let lat: string = addressData.results[0].geometry.location.lat;
@@ -386,7 +382,6 @@ export class HomePage {
     this.getAddresFromCoordsApi(lattitude,longitude).subscribe(addressData => {
       var coords = addressData["results"];
       var info = (coords[coords.length -3])["formatted_address"].split(",");
-      console.log(info);
       this.dataUbication.push(info[2]);
       this.dataUbication.push(info[1]);
       this.dataUbication.push(info[0]); 
@@ -771,6 +766,7 @@ export class HomePage {
        result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     this.idUser = result;
+    this.idUserShow = "Tú id: "+ result;
     this.firebaseService.saveNewId(result,this.uid);
  } 
 }

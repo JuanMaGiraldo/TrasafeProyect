@@ -18,7 +18,6 @@ export class Department{
     constructor(name,array){
         this.department = name;
         this.cities = [];
-        console.log(array)
         for(var city of array){
             this.cities.push(new City(city["city"],city["locations"]));
         }        

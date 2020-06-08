@@ -3,6 +3,8 @@ import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms'
 import { NavController } from '@ionic/angular';
 import { AuthenticationService } from '../../services/authentication.service';
 import { Storage } from '@ionic/storage';
+import { SplashScreen } from '@ionic-native/splash-screen/ngx';
+
 
 @Component({
   selector: 'app-login',
@@ -19,12 +21,11 @@ export class LoginPage implements OnInit {
     private navCtrl: NavController,
     private authService: AuthenticationService,
     private formBuilder: FormBuilder,
-    private storage: Storage
+    private storage: Storage,
+    private splashscreen: SplashScreen
  
   ) { 
-
     this.verifyUser();
-
   }
  
   ngOnInit() {
@@ -40,6 +41,8 @@ export class LoginPage implements OnInit {
         Validators.required
       ])),
     });
+
+    this.reloadApp();
   }
 
   async verifyUser(){
@@ -47,10 +50,19 @@ export class LoginPage implements OnInit {
       if(val != null && val != ""){
         this.goToApplication();
       }
+    });    
+  }
+ 
+  async reloadApp(){
+    this.storage.get("reload").then((val) => {
+      if(val != null && val != "" && val == "yes"){
+        this.splashscreen.show();
+        window.location.reload(true);
+        this.storage.set("reload","");
+      }
     });
     
   }
- 
  
   validation_messages = {
     'email': [

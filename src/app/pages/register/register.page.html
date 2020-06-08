@@ -13,19 +13,6 @@
   <form class="form" [formGroup]="validations_form"  (ngSubmit)="tryRegister(validations_form.value)">
  
     <ion-item>
-      <ion-label  position="floating" color="primary">Usuario</ion-label>
-      <ion-input type="text" formControlName="user"></ion-input>
-    </ion-item>
-    <div class="validation-errors">
-        
-      <ng-container *ngFor="let validation of validation_messages.user">
-        <div class="error-message" *ngIf="validations_form.get('user').hasError(validation.type) && (validations_form.get('user').dirty || validations_form.get('user').touched)">
-          {{ validation.message }}
-        </div>
-      </ng-container>
-    </div>
-
-    <ion-item>
       <ion-label  position="floating" color="primary">Email</ion-label>
       <ion-input type="text" formControlName="email"></ion-input>
     </ion-item>
