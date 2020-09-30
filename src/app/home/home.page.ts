@@ -42,7 +42,7 @@ export class HomePage {
   isTracking: boolean;
   postionSubscription: Subscription;
   trackingUbication: string;
-  lastTrackUbication: any;
+  lastTrackUbication: any = null;
   isShowingMessage: boolean;
   locations: any;
   arrayLocalities: any[];
@@ -51,7 +51,7 @@ export class HomePage {
   markerShareUbication: any = null;
   idUser: string = "";
   idUserShow: string = "";
-  flagExit: boolean = false;
+  flagUserConnectedWithUser: boolean = false;
   countryInfo: Country = null;
   locationsToUpdate: any;
   searchBox: any;
@@ -97,7 +97,7 @@ export class HomePage {
     this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
     this.initAutocomplete();
     this.whereIAm();
-    this.startTracking();
+    this.startTracking()
   }
 
   initAutocomplete() {
@@ -149,8 +149,10 @@ export class HomePage {
         setTimeout(() => {
           //this.actualUbication = {lat: data.coords.latitude, lng: data.coords.longitude};       //Testing locations 
           this.actualUbication = { lat: this.map.center.lat(), lng: this.map.center.lng() }
-          this.setUserMarker();
-          this.getNearestLocation();
+          if (this.userChangePosition(this.actualUbication)) {
+            this.setUserMarker();
+            this.getNearestLocation();
+          }
         });
       });
   }
@@ -158,9 +160,9 @@ export class HomePage {
   confirmId(id) {
     this.db.collection("/users", ref => ref.where('id', '==', id)).valueChanges().subscribe(res => {
       if (res && res[0] && res[0]["uid"]) {
-        if (!this.flagExit) {
+        if (!this.flagUserConnectedWithUser) {
           this.createAlert("Éxito!", "Conexión éxitosa.");
-          this.flagExit = true;
+          this.flagUserConnectedWithUser = true;
         }
         this.getLastUbication(res[0]["uid"]);
       } else {
@@ -169,147 +171,148 @@ export class HomePage {
     });
   }
 
-  async loadLocalities(dataset: Location[], query, i, j) {
-    var k = 0;
-    for (let location of dataset) {
-      this.createIndicator(query, location, i, j, k);
-      k++;
-    }
-    setTimeout(() => {
-      this.saveLocations();
-    }, 10000);
-
-  }
-
-  saveLocations() {
-    this.storage.set("locationsArray", this.countryInfo);
-  }
-
-  createIndicator(query, location: Location, i, j, k) {
-    if (query != null && query != "" && location != null && location.location != "") {
-      query += " " + location.location;
-      if (!this.isNullOrEmpty(location.lat) && !this.isNullOrEmpty(location.lng)) {
-        let lat: string = location.lat;
-        let long: string = location.lng;
-        var marker = new Marker({ lat: lat, lng: long }, location.location, location.theftId, location.terrorismId);
-        this.arrayMarkers.push(marker);
-        this.createMarker(lat, long, location.theftId, location.terrorismId, location.theftRating, location.terrorismRating, location.location, "body");
-      } else {
-        this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
-          if (addressData && addressData.results[0]) {
-            let lat: string = addressData.results[0].geometry.location.lat;
-            let long: string = addressData.results[0].geometry.location.lng;
-            var marker = new Marker({ lat: lat, lng: long }, location.location, location.theftId, location.terrorismId);
-            if (!this.isNullOrEmpty(i) && !this.isNullOrEmpty(j) && !this.isNullOrEmpty(k) && !this.isNullOrEmpty(lat) && !this.isNullOrEmpty(long)) {
-              this.countryInfo.departments[i].cities[j].locations[k].lat = lat;
-              this.countryInfo.departments[i].cities[j].locations[k].lng = long;
-            }
-            this.arrayMarkers.push(marker);
-            this.createMarker(lat, long, location.theftId, location.terrorismId, location.theftRating, location.terrorismRating, location.location, "body");
-          }
-        });
-      }
-    }
-  }
-
   getGeoCodefromGoogleAPI(address: string): Observable<any> {
     return this._http.get('https://maps.googleapis.com/maps/api/geocode/json?address=' + address + "&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU");
   }
 
-  createMarker(lat, long, theftId = "", terrorismId = "", theftRating = "", terrorismRating = "", title = "", body = "") {
-    var marker;
-    var myLatLng = null;
+  createIndicator(query, location: Location, i, j, k) {
+    query += " " + location.location;
+    if (location.isLatLongDefined()) {
+      console.log(location.getLatLng());
+      var newMarker = new Marker(location);
+      this.arrayMarkers.push(newMarker);
+      this.createLocationMarker(location);
+    } else {
+      this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
+        if (addressData && addressData.results[0]) {
+          let lat: string = addressData.results[0].geometry.location.lat;
+          let long: string = addressData.results[0].geometry.location.lng;
+          var marker = new Marker(location);
+          if (!this.isNullOrEmpty(i) && !this.isNullOrEmpty(j) && !this.isNullOrEmpty(k) && !this.isNullOrEmpty(lat) && !this.isNullOrEmpty(long)) {
+            this.countryInfo.departments[i].cities[j].locations[k].lat = lat;
+            this.countryInfo.departments[i].cities[j].locations[k].lng = long;
+          }
+          this.arrayMarkers.push(marker);
+          this.createLocationMarker(location);
+        }
+      });
+    }
+
+  }
+
+  updateUserMarker(latLng) {
     var map = this.map;
 
-    if (lat != null && long != null && theftId != null && typeof theftId != 'undefined') {
-      myLatLng = { lat: Number(lat), lng: Number(long) };
+    if (this.marker) {
+      this.marker.setMap(null);
+    }
+    this.lastTrackUbication = latLng;
+    var marker = new google.maps.Marker({
+      position: latLng,
+      map: map
+    });
+
+    this.marker = marker;
+  }
+
+  updateUserShareLocationMarker(latLng) {
+    var map = this.map;
+
+    if (this.markerShareUbication) {
+      this.markerShareUbication.setMap(null);
+    }
+
+    var marker = new google.maps.Marker({
+      position: latLng,
+      map: map,
+      icon: this.getMarketIcon("ubication")
+    });
+    this.markerShareUbication = marker;
+  }
+
+  createLocationMarker(location: Location) {
+    var contentCard = this.createCard(location);
+    var map = this.map;
+    var TIME_CLOSE_CARD = 2000;
+
+    var infowindow = new google.maps.InfoWindow({
+      content: contentCard
+    });
+    var urlIcon = this.getMarketIcon(location.theftId);
+
+    var marker = new google.maps.Marker({
+      position: location.getLatLng(),
+      map: map,
+      icon: urlIcon
+    });
+
+    marker.addListener('click', function () {
+      infowindow.open(map, marker);
+      marker.setAnimation(google.maps.Animation.BOUNCE);
+      setTimeout(function () {
+        marker.setAnimation(null);
+      }, TIME_CLOSE_CARD);
+    });
+
+    if (location.theftId != "") {
+      this.createTheftCircle(location, map);
+    }
+
+    if (location.terrorismId != "") {
+      this.createTerrorismCircle(location, map);
+    }
+  }
+
+  createTerrorismCircle(location: Location, map) {
+    new google.maps.Circle({
+      strokeColor: this.getColor(location.terrorismId, "terrorism"),
+      strokeOpacity: 1,
+      strokeWeight: 3,
+      fillOpacity: 0,
+      map: map,
+      center: location.getLatLng(),
+      radius: 70
+    });
+  }
+
+  createTheftCircle(location: Location, map) {
+    new google.maps.Circle({
+      strokeColor: '#DAD7D6',
+      strokeOpacity: 0.8,
+      strokeWeight: 1,
+      fillColor: this.getColor(location.theftId, "theft"),
+      fillOpacity: 0.35,
+      map: map,
+      center: location.getLatLng(),
+      radius: 70
+    });
+  }
+
+  createMarker(latLng, theftId = "", terrorismId = "", theftRating = "", terrorismRating = "", title = "") {
+    var marker;
+    var map = this.map;
+
+    if (theftId != null && typeof theftId != 'undefined') {
       if (theftId == "ubication") {
-        if (this.markerShareUbication) {
-          this.markerShareUbication.setMap(null);
-        }
-        marker = new google.maps.Marker({
-          position: myLatLng,
-          map: map,
-          icon: this.getIcon("ubication")
-        });
-        this.markerShareUbication = marker;
-      }
-      else if (theftId == "user") {
-        if (this.lastTrackUbication != null && lat == this.lastTrackUbication["lat"] && long == this.lastTrackUbication["lng"]) {
-          return;
-        }
-        if (this.marker) {
-          this.marker.setMap(null);
-        }
-        this.lastTrackUbication = myLatLng;
-
-        marker = new google.maps.Marker({
-          position: myLatLng,
-          map: map
-        });
-
-        this.marker = marker;
 
       } else {
 
-        if (body != "" && title != "") {
+        if (title != "") {
 
-          var contentCard = '<div id="content">';
-          contentCard += (title ? '<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">' + title + '</h1>' : "");
-          contentCard += (body ? '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>' + this.getTypeIndex(theftId) + '</div>' : "");
-          contentCard += (body ? '<div id="bodyContent"> <strong>Número de hurtos: </strong>' + theftRating + '</div>' : "");
-          contentCard += (body ? '<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>' + this.getTypeIndex(terrorismId) + '</div>' : "");
-          contentCard += (body ? '<div id="bodyContent"> <strong>Número de atentados: </strong>' + terrorismRating + '</div>' : "");
-          contentCard += '</div>';
-
-          var infowindow = new google.maps.InfoWindow({
-            content: contentCard
-          });
-
-          theftId = String(theftId);
-
-          var url = this.getIcon(theftId);
-
-          marker = new google.maps.Marker({
-            position: myLatLng,
-            map: map,
-            icon: url
-          });
-
-          marker.addListener('click', function () {
-            infowindow.open(map, marker);
-            marker.setAnimation(google.maps.Animation.BOUNCE);
-            setTimeout(function () {
-              marker.setAnimation(null);
-            }, 2000);
-          });
-          if (theftId != "") {
-            new google.maps.Circle({
-              strokeColor: '#DAD7D6',
-              strokeOpacity: 0.8,
-              strokeWeight: 1,
-              fillColor: this.getColor(theftId, "theft"),
-              fillOpacity: 0.35,
-              map: map,
-              center: myLatLng,
-              radius: 70
-            });
-          }
-
-          if (terrorismId != "") {
-            new google.maps.Circle({
-              strokeColor: this.getColor(terrorismId, "terrorism"),
-              strokeOpacity: 1,
-              strokeWeight: 3,
-              fillOpacity: 0,
-              map: map,
-              center: myLatLng,
-              radius: 70
-            });
-          }
         }
       }
     }
+  }
+
+  createCard(location: Location) {
+    var contentCard = '<div id=content">';
+    contentCard += ('<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">' + location.location + '</h1>');
+    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>' + this.getTypeIndex(location.theftId) + '</div>');
+    contentCard += ('<div id="bodyContent"> <strong>Número de hurtos: </strong>' + location.theftRating + '</div>');
+    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>' + this.getTypeIndex(location.terrorismId) + '</div>');
+    contentCard += ('<div id="bodyContent"> <strong>Número de atentados: </strong>' + location.terrorismRating + '</div>');
+    contentCard += '</div>';
+    return contentCard;
   }
 
   loadIndicatorsFromCoords(lattitude, longitude) {
@@ -343,6 +346,7 @@ export class HomePage {
     var userLat = this.actualUbication["lat"];
     var userLong = this.actualUbication["lng"];
 
+    console.log(this.arrayMarkers);
     for (var marker of this.arrayMarkers) {
       var coord = marker.coords;
       var distance = Math.sqrt(Math.pow(coord.lat - userLat, 2) + Math.pow(coord.lng - userLong, 2));
@@ -396,10 +400,6 @@ export class HomePage {
     }
   }
 
-  displayElement(element, type) {
-    (<HTMLInputElement>document.getElementById(element)).style.display = type;
-  }
-
   async shareUbication() {
 
     var i = 1;
@@ -423,6 +423,9 @@ export class HomePage {
     }
   }
 
+  saveLocations() {
+    this.storage.set("locationsArray", this.countryInfo);
+  }
 
   createLineBetweenPoints(path) {
     var lineSymbol = {
@@ -448,6 +451,11 @@ export class HomePage {
     this.line = line;
   }
 
+  userChangePosition(latLng) {
+    return this.lastTrackUbication == null || latLng.lat != this.lastTrackUbication["lat"] || latLng.long != this.lastTrackUbication["lng"];
+  }
+
+
   askAlertAgain() {
     return this.compareDates(this.lastAlert);
   }
@@ -469,33 +477,10 @@ export class HomePage {
     return false;
   }
 
-
-  getIcon(indicator) {
-    switch (indicator) {
-      case "3":
-        return '../../assets/icon/green-dot.png';
-      case "2":
-        return '../../assets/icon/yellow-dot.png';
-      case "1":
-        return '../../assets/icon/red-dot.png';
-      case "user":
-        return '../../assets/icon/user.png';
-      case "ubication":
-        return '../../assets/icon/man.png';
-      default:
-        return '../../assets/icon/blue-dot.png';
-    }
-  }
-
-  getColor(indicator, key) {
-    indicator -= 1;
-    return (key == "theft" ? ['red', 'yellow', 'green'][indicator] : ['black', '', '#8393F1'][indicator]);
-  }
-
   async showLastUbication(ubication) {
     ubication = JSON.parse(ubication);
-    if (ubication != null && ubication != "") {
-      this.createMarker(ubication["lat"], ubication["lng"], "ubication");
+    if (!this.isNullOrEmpty(ubication)) {
+      this.updateUserShareLocationMarker(this.createLatLngObj(ubication["lat"], ubication["lng"]));
     }
   }
 
@@ -531,7 +516,7 @@ export class HomePage {
   }
 
   setUserMarker() {
-    this.createMarker(this.actualUbication.lat, this.actualUbication.lng, "user");
+    this.updateUserMarker(this.createLatLngObj(this.actualUbication.lat, this.actualUbication.lng));
   }
 
   getUid() {
@@ -539,6 +524,17 @@ export class HomePage {
       if (val != null && val != "") {
         this.uid = val;
         this.generateId();
+      }
+    });
+  }
+
+  getLocations({ country, department, city }) {
+    this.storage.get("locationsArray").then((res) => {
+      if (res != null && res != "") {
+        this.countryInfo = new Country(res.country, res.departments);
+        this.getLocationsInfo(department, city);
+      } else {
+        this.getLocationsFirebase(country, department, city);
       }
     });
   }
@@ -552,20 +548,7 @@ export class HomePage {
     });
   }
 
-  getLocations({ country, department, city }) {
-
-    this.storage.get("locationsArray").then((res) => {
-      if (res != null && res != "") {
-        this.countryInfo = res;
-        this.getLocationsInfo(department, city);
-      } else {
-        this.getLocationsFirebase(country, department, city);
-      }
-    });
-  }
-
   getLocationsInfo(departmentQuery, cityQuery) {
-
     var departments: Department[] = this.countryInfo.departments;
     var i = 0, j = 0
     for (var department of departments) {
@@ -583,7 +566,24 @@ export class HomePage {
     }
   }
 
+  async loadLocalities(dataset: Location[], query, i, j) {
+    var k = 0;
+    for (var location of dataset) {
+      if (location && !this.isNullOrEmpty(location.location)) {
+        this.createIndicator(query, location, i, j, k);
+      }
+      k++;
+    }
+    setTimeout(() => {
+      this.saveLocations();
+    }, 10000);
+  }
+
+
+
   // Generic methods
+
+  createLatLngObj(latArg, lngArg) { return { lat: Number(latArg), lng: Number(lngArg) }; }
 
   compareStrings(var1, var2) { return this.removeAccents(var1) == this.removeAccents(var2) }
 
@@ -592,6 +592,31 @@ export class HomePage {
   getTypeIndex(index) { return ['Nulo', 'Alto', 'Medio', 'Bajo'][index]; }
 
   isNullOrEmpty(val) { return (val == null || (val !== 0 && val === "")); }
+
+  displayElement(element, type) { (<HTMLInputElement>document.getElementById(element)).style.display = type; }
+
+  getMarketIcon(indicator) {
+    indicator = String(indicator)
+    switch (indicator) {
+      case "3":
+        return '../../assets/icon/green-dot.png';
+      case "2":
+        return '../../assets/icon/yellow-dot.png';
+      case "1":
+        return '../../assets/icon/red-dot.png';
+      case "user":
+        return '../../assets/icon/user.png';
+      case "ubication":
+        return '../../assets/icon/man.png';
+      default:
+        return '../../assets/icon/blue-dot.png';
+    }
+  }
+
+  getColor(indicator, key) {
+    indicator -= 1;
+    return (key == "theft" ? ['red', 'yellow', 'green'][indicator] : ['black', '', '#8393F1'][indicator]);
+  }
 
   generateId() {
     var result = '';

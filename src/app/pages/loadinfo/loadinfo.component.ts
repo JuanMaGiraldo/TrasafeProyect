@@ -10,22 +10,21 @@ import { Storage } from '@ionic/storage';
 })
 export class LoadinfoComponent implements OnInit {
 
-  constructor( 
-    private af : AngularFireDatabase,
+  constructor(
+    private af: AngularFireDatabase,
     private storage: Storage,
   ) { }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
-  async getLocationsFirebase(){
+  async getLocationsFirebase() {
     this.af.list("/").valueChanges().subscribe(val => {
-      var countryInfo: Country = new Country(val[0],val[1]);   
+      var countryInfo: Country = new Country(val[0], val[1]);
       this.saveDatabase(countryInfo);
     });
   }
-  async saveDatabase(countryInfo){
-    await this.storage.set("locationsArray",countryInfo);
-    //cambiar de pag
+  async saveDatabase(countryInfo) {
+    await this.storage.set("locationsArray", countryInfo);
   }
 
 }

@@ -1,13 +1,14 @@
-export class Marker{
-    coords : any;
-    location : string;
-    theftId : string;
-    terrorismId : string;
+import { Location } from '../models/country';
+export class Marker {
+    coords: any;
+    location: string;
+    theftId: string;
+    terrorismId: string;
 
-    constructor(coords, location, theftId = "", terrorismId = ""){
-        this.coords = coords;
-        this.location = location;
-        this.theftId = theftId;
-        this.terrorismId = terrorismId;
+    constructor(location: Location) {
+        this.coords = location.getLatLng();
+        this.location = location.location;
+        this.theftId = location.theftId;
+        this.terrorismId = location.terrorismId;
     }
 }
