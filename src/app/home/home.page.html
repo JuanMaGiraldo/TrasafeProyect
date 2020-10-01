@@ -1,53 +1,57 @@
 <ion-header>
-  <ion-row>
-    <ion-col text-start>
-      <ion-title style = "color: #254B96; font-family: 'Yellowtail', cursive; font-size: 31px;">Trasafe</ion-title>
-    </ion-col>
-    <ion-col text-end>
-      <ion-button (click)="centerMap()" shape="round" fill="outline">
-        <ion-icon slot="start" name="locate"></ion-icon>
-        ¿Dónde estoy?
-      </ion-button>
-    </ion-col>
+
+  <ion-row class="header">
+
+    <ion-title class="logo_title">Trasafe</ion-title>
+
+    <ion-button class="button_where" (click)="centerMap()" shape="round" fill="outline">
+      <ion-icon slot="start" name="locate"></ion-icon>
+      ¿Dónde estoy?
+    </ion-button>
+
   </ion-row>
+
 </ion-header>
 <ion-content>
   <ion-item>
-    <input id = "pac-input" class = "controls" type="text" placeholder="Consulte y seleccione un lugar:">
-    <ion-button (click)= "searchInfoPlace()" color= "primary"><ion-icon name="search-circle-outline"></ion-icon></ion-button>
+    <input id="pac-input" class="controls" type="text" placeholder="Consulte y seleccione un lugar:">
+    <ion-button (click)="searchInfoPlace()" color="primary">
+      <ion-icon name="search-circle-outline"></ion-icon>
+    </ion-button>
   </ion-item>
 
   <div class="map-wrapper">
     <div #map id="map"></div>
   </div>
 
-  
-  <div class = "info-user">       
-    <div *ngIf = "isSharingLocation" class ="share-location"  (click) = "shareLocationClick()">
-      <img  class = "alertImages" src='../../assets/icon/share-location.png' alt = 'compartiendo ubicacion'>      
-      <span class = "share" >Dejar de compartir</span>  
+
+  <div class="info-user">
+    <div *ngIf="isSharingLocation" class="share-location" (click)="shareLocationClick()">
+      <img class="alertImages" src='../../assets/icon/share-location.png' alt='compartiendo ubicacion'>
+      <span class="share">Dejar de compartir</span>
     </div>
-    <div *ngIf = "!isSharingLocation" class = "noshare-location"  (click) = "shareLocationClick()">
-      <img  class = "alertImages" src='../../assets/icon/noshare-location.png'alt = 'no compartiendo ubicación' >
-      <span class = "share">Compartir ubicación</span>  
-    </div>    
-    <div class = "divUserZone" >
-      <span id = "indicatorTheft">{{userTheftZone}}</span>
-      <span id = "divisor" style = "padding-right: 10px;"></span>
-      <span id = "indicatorTerrorism">{{userTerrorismZone}}</span>
+    <div *ngIf="!isSharingLocation" class="noshare-location" (click)="shareLocationClick()">
+      <img class="alertImages" src='../../assets/icon/noshare-location.png' alt='no compartiendo ubicación'>
+      <span class="share">Compartir ubicación</span>
+    </div>
+
+    <div class="divUserZone">
+      <span id="indicatorTheft">{{userTheftZone}}</span>
+      <span id="divisor" style="padding-right: 10px;"></span>
+      <span id="indicatorTerrorism">{{userTerrorismZone}}</span>
     </div>
 
     <div class="div_share_ubication">
       <div class="div_id_user">
-        <span class = "id_user">{{idUserShow}} </span>
+        <span class="id_user">{{idUserShow}} </span>
       </div>
-      
+
       <ion-button size="small" (click)="showInputIdUser()">Ver ubicacion usuario</ion-button>
     </div>
-    
 
-    <span style = "display:none;">{{trackingUbication}} </span>
+
+    <span style="display:none;">{{trackingUbication}} </span>
     <span>{{console}}</span>
-    <span style = "color:red;">{{error}} </span>
+    <span style="color:red;">{{error}} </span>
   </div>
 </ion-content>

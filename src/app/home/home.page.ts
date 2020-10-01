@@ -175,31 +175,6 @@ export class HomePage {
     return this._http.get('https://maps.googleapis.com/maps/api/geocode/json?address=' + address + "&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU");
   }
 
-  createIndicator(query, location: Location, i, j, k) {
-    query += " " + location.location;
-    if (location.isLatLongDefined()) {
-      console.log(location.getLatLng());
-      var newMarker = new Marker(location);
-      this.arrayMarkers.push(newMarker);
-      this.createLocationMarker(location);
-    } else {
-      this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
-        if (addressData && addressData.results[0]) {
-          let lat: string = addressData.results[0].geometry.location.lat;
-          let long: string = addressData.results[0].geometry.location.lng;
-          var marker = new Marker(location);
-          if (!this.isNullOrEmpty(i) && !this.isNullOrEmpty(j) && !this.isNullOrEmpty(k) && !this.isNullOrEmpty(lat) && !this.isNullOrEmpty(long)) {
-            this.countryInfo.departments[i].cities[j].locations[k].lat = lat;
-            this.countryInfo.departments[i].cities[j].locations[k].lng = long;
-          }
-          this.arrayMarkers.push(marker);
-          this.createLocationMarker(location);
-        }
-      });
-    }
-
-  }
-
   updateUserMarker(latLng) {
     var map = this.map;
 
@@ -550,36 +525,44 @@ export class HomePage {
 
   getLocationsInfo(departmentQuery, cityQuery) {
     var departments: Department[] = this.countryInfo.departments;
-    var i = 0, j = 0
-    for (var department of departments) {
-      if (this.compareStrings(department.department, departmentQuery)) {
-        var cities: City[] = department.cities;
-        for (var city of cities) {
-          if (this.compareStrings(city.city, cityQuery)) {
-            this.loadLocalities(city.locations, this.countryInfo.country + " " + departmentQuery + " " + cityQuery, i, j);
-            return;
-          }
-          j++;
-        }
-      }
-      i++;
+    var departmentToLoad = departments.find(department => this.compareStrings(department.department, departmentQuery));
+    var cityToLoad = departmentToLoad.cities.find(city => this.compareStrings(city.city, cityQuery));
+    if (cityToLoad) {
+      this.loadLocalities(cityToLoad.locations, `${this.countryInfo.country} ${departmentQuery} ${cityQuery}`);
     }
   }
 
-  async loadLocalities(dataset: Location[], query, i, j) {
-    var k = 0;
-    for (var location of dataset) {
+  async loadLocalities(locationsToLoad: Location[], query) {
+    for (var location of locationsToLoad) {
       if (location && !this.isNullOrEmpty(location.location)) {
-        this.createIndicator(query, location, i, j, k);
+        this.createIndicator(location, query);
       }
-      k++;
     }
     setTimeout(() => {
       this.saveLocations();
     }, 10000);
   }
 
-
+  createIndicator(location: Location, query) {
+    query = `${query} ${location.location}`;
+    if (location.isLatLongDefined()) {
+      var newMarker = new Marker(location);
+      this.arrayMarkers.push(newMarker);
+      this.createLocationMarker(location);
+    } else {
+      this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
+        if (addressData && addressData.results[0]) {
+          let lat: string = addressData.results[0].geometry.location.lat;
+          let long: string = addressData.results[0].geometry.location.lng;
+          location.lat = lat;
+          location.lng = long;
+          var marker = new Marker(location);
+          this.arrayMarkers.push(marker);
+          this.createLocationMarker(location);
+        }
+      });
+    }
+  }
 
   // Generic methods
 

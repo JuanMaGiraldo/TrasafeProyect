@@ -31,7 +31,7 @@ export class City {
         this.city = name;
         this.locations = [];
         for (var location of array) {
-            this.locations.push(new Location(location["location"], location["theftId"], location["terrorismId"], location["theftRating"], location["terrorismRating"]));
+            this.locations.push(new Location(location["location"], location["theftId"], location["terrorismId"], location["theftRating"], location["terrorismRating"], location["lat"], location["lng"]));
         }
     }
 }
@@ -45,15 +45,17 @@ export class Location {
     terrorismRating: string;
     lat: string = "";
     lng: string = "";
-    constructor(location?, theftId?, terrorismId?, theftRating?, terrorismRating?) {
+    constructor(location?, theftId?, terrorismId?, theftRating?, terrorismRating?, lat?, lng?) {
         if (location != "") {
             this.location = location;
             this.theftId = theftId;
             this.terrorismId = terrorismId;
             this.theftRating = theftRating;
             this.terrorismRating = terrorismRating;
-            this.lat = "";
-            this.lng = "";
+            if (lat && lng) {
+                this.lat = lat;
+                this.lng = lng;
+            }
         }
     }
 
