@@ -45,6 +45,7 @@ export class Location {
     terrorismRating: string;
     lat: string = "";
     lng: string = "";
+
     constructor(location?, theftId?, terrorismId?, theftRating?, terrorismRating?, lat?, lng?) {
         if (location != "") {
             this.location = location;
@@ -65,5 +66,15 @@ export class Location {
 
     public getLatLng() {
         return { lat: Number(this.lat), lng: Number(this.lng) };
+    }
+
+    public googleCanFindLocation() {
+        return this.lat != "none" && this.lng != "none";
+    }
+
+    public setLatLng(lat, lng) {
+        console.log("set: ", lat, lng)
+        this.lat = lat;
+        this.lng = lng;
     }
 }

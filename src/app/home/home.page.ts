@@ -12,6 +12,7 @@ import { AngularFireDatabase } from '@angular/fire/database';
 import { Country, Department, City, Location } from '../models/country';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { LocationCity } from '../models/locationCity';
 
 declare var google;
 
@@ -24,6 +25,7 @@ export class HomePage {
 
   @ViewChild('map', { static: false }) mapElement: ElementRef;
   map: any;
+  KEY_COUNTRY_DATA = "locationsArray";
   error: string = "";
   console: string = "";
   marker: any;
@@ -55,6 +57,7 @@ export class HomePage {
   countryInfo: Country = null;
   locationsToUpdate: any;
   searchBox: any;
+  shareUser: any = null;
 
   constructor(
 
@@ -103,14 +106,15 @@ export class HomePage {
   initAutocomplete() {
     var input = document.getElementById('pac-input');
     this.searchBox = new google.maps.places.SearchBox(input);
+    console.log(this.searchBox);
   }
 
   whereIAm() {
     this.geolocation.getCurrentPosition()
       .then(({ coords }) => {
-        this.actualUbication = { lat: coords.latitude, lng: coords.longitude };
-        this.centerMap();
-        this.loadIndicatorsFromCoords(coords.latitude, coords.longitude);
+        this.actualUbication = this.createLatLngObj(coords.latitude, coords.longitude);
+        this.centerUserMap();
+        this.loadIndicatorsFromCoords(this.actualUbication);
       })
       .catch((error) => {
         this.error = `Error where i am: ${error}`;
@@ -118,6 +122,7 @@ export class HomePage {
   }
 
   getUserSearchPlace() {
+    console.log(this.searchBox)
     return (this.searchBox ? this.searchBox.gm_accessors_.places.oe.formattedPrediction : "");
   }
 
@@ -126,17 +131,21 @@ export class HomePage {
     if (placeToSearch) {
       this.getGeoCodefromGoogleAPI(placeToSearch).subscribe(addressData => {
         var location = addressData.results[0].geometry.location;
-        let lat: Number = Number(location.lat);
-        let long: Number = Number(location.lng);
-        this.map.setCenter({ lat: lat, lng: long });
+        var latLng = this.createLatLngObj(location.lat, location.lng);
+        this.map.setCenter(latLng);
         this.map.setZoom(17);
-        this.loadIndicatorsFromCoords(lat, long);
+        this.loadIndicatorsFromCoords(latLng);
       });
     }
   }
 
-  centerMap() {
+  centerUserMap() {
     this.map.setCenter(this.actualUbication);
+    this.map.setZoom(17);
+  }
+
+  centerShareUser() {
+    this.map.setCenter(this.shareUser);
     this.map.setZoom(17);
   }
 
@@ -190,7 +199,7 @@ export class HomePage {
     this.marker = marker;
   }
 
-  updateUserShareLocationMarker(latLng) {
+  updateUserShareLocationMarker() {
     var map = this.map;
 
     if (this.markerShareUbication) {
@@ -198,7 +207,7 @@ export class HomePage {
     }
 
     var marker = new google.maps.Marker({
-      position: latLng,
+      position: this.shareUser,
       map: map,
       icon: this.getMarketIcon("ubication")
     });
@@ -238,141 +247,131 @@ export class HomePage {
     }
   }
 
-  createTerrorismCircle(location: Location, map) {
-    new google.maps.Circle({
-      strokeColor: this.getColor(location.terrorismId, "terrorism"),
-      strokeOpacity: 1,
-      strokeWeight: 3,
-      fillOpacity: 0,
-      map: map,
-      center: location.getLatLng(),
-      radius: 70
-    });
-  }
+  loadIndicatorsFromCoords({ lat, lng }) {
+    this.getAddresFromCoordsApi(lat, lng).subscribe(addressData => {
+      var locationCity = this.getInfoAddressFormCoords(addressData);
 
-  createTheftCircle(location: Location, map) {
-    new google.maps.Circle({
-      strokeColor: '#DAD7D6',
-      strokeOpacity: 0.8,
-      strokeWeight: 1,
-      fillColor: this.getColor(location.theftId, "theft"),
-      fillOpacity: 0.35,
-      map: map,
-      center: location.getLatLng(),
-      radius: 70
-    });
-  }
-
-  createMarker(latLng, theftId = "", terrorismId = "", theftRating = "", terrorismRating = "", title = "") {
-    var marker;
-    var map = this.map;
-
-    if (theftId != null && typeof theftId != 'undefined') {
-      if (theftId == "ubication") {
-
-      } else {
-
-        if (title != "") {
-
-        }
-      }
-    }
-  }
-
-  createCard(location: Location) {
-    var contentCard = '<div id=content">';
-    contentCard += ('<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">' + location.location + '</h1>');
-    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>' + this.getTypeIndex(location.theftId) + '</div>');
-    contentCard += ('<div id="bodyContent"> <strong>Número de hurtos: </strong>' + location.theftRating + '</div>');
-    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>' + this.getTypeIndex(location.terrorismId) + '</div>');
-    contentCard += ('<div id="bodyContent"> <strong>Número de atentados: </strong>' + location.terrorismRating + '</div>');
-    contentCard += '</div>';
-    return contentCard;
-  }
-
-  loadIndicatorsFromCoords(lattitude, longitude) {
-    this.getAddresFromCoordsApi(lattitude, longitude).subscribe(addressData => {
-      var coords = addressData["results"];
-      var info = (coords[coords.length - 3])["formatted_address"].split(",");
-      var locationToLoad = {
-        country: info[2],
-        department: info[1],
-        city: info[0],
-        query: `${info[2]} ${info[1]} ${info[0]}`
-      }
-      if (locationToLoad.country && locationToLoad.department && locationToLoad.city && !this.localitiesLoaded.includes(locationToLoad.query)) {
-        this.loadIndicators(locationToLoad);
+      if (locationCity.isLocationCityDefined()) {
+        this.loadCityZones(locationCity);
       }
     });
-  }
-
-  loadIndicators(locationToLoad) {
-    this.localitiesLoaded.push(locationToLoad.query);
-    this.getLocations(locationToLoad);
   }
 
   getAddresFromCoordsApi(lat, lng): Observable<any> {
     return this._http.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyDzQIvZVyTi7pfm2sIg4u81vmqGx4SBF3c`);
   }
 
+  getInfoAddressFormCoords(addressData) {
+    var arrayInfo = this.getResponseAddressFromCoords(addressData);
+    var locationCity = new LocationCity();
+    locationCity.setCountry(arrayInfo[2]);
+    locationCity.setDepartment(arrayInfo[1]);
+    locationCity.setCity(arrayInfo[0]);
+    return locationCity;
+  }
+
+  getResponseAddressFromCoords(addressData) {
+    var coords = addressData["results"];
+    return (coords[coords.length - 3])["formatted_address"].split(",");
+  }
+
+  async loadCityZones(locationCity: LocationCity) {
+    this.storage.get(this.KEY_COUNTRY_DATA)
+      .then((res) => {
+        if (res) {
+          this.countryInfo = new Country(res.country, res.departments);
+          this.findCityToLoad(locationCity);
+        } else {
+          this.getCountryDataFirebase(locationCity);
+        }
+      });
+  }
+
+  async getCountryDataFirebase(locationCity: LocationCity) {
+    this.af.list("/").valueChanges().subscribe(val => {
+      this.countryInfo = new Country(val[0], val[1]);
+      this.saveCountryData();
+      this.findCityToLoad(locationCity);
+    });
+  }
+
+  findCityToLoad(locationCity: LocationCity) {
+    var departments: Department[] = this.countryInfo.departments;
+    var departmentToLoad = departments.find(department => this.compareStrings(department.department, locationCity.getDepartment()));
+    var cityToLoad = departmentToLoad.cities.find(city => this.compareStrings(city.city, locationCity.getCity()));
+    if (cityToLoad) {
+      this.loadLocalities(cityToLoad.locations, locationCity);
+      this.localitiesLoaded.push(locationCity.getStringAddress());
+    }
+  }
+
   getNearestLocation() {
     var nearDistance = null;
     var nearMarker = null;
-    var userLat = this.actualUbication["lat"];
-    var userLong = this.actualUbication["lng"];
+    var userPosition = this.actualUbication;
 
-    console.log(this.arrayMarkers);
     for (var marker of this.arrayMarkers) {
-      var coord = marker.coords;
-      var distance = Math.sqrt(Math.pow(coord.lat - userLat, 2) + Math.pow(coord.lng - userLong, 2));
-      if (nearDistance == null || nearDistance > distance) {
-        nearDistance = distance;
+      var distanceBetweenUserMarker = this.calculateDistance(marker.coords, userPosition);
+      if (nearDistance == null || nearDistance > distanceBetweenUserMarker) {
+        nearDistance = distanceBetweenUserMarker;
         nearMarker = marker;
       }
     }
-    if (nearMarker == null) {
-      return;
+
+    if (nearMarker) {
+      this.createLineBetweenUserMarker(nearMarker.coords, userPosition);
+      this.updateRiskMessages(nearMarker);
+      this.showAlertCard(nearMarker);
     }
+  }
 
-    var path = [
-      { lat: parseFloat(nearMarker.coords.lat), lng: parseFloat(nearMarker.coords.lng) },
-      { lat: parseFloat(userLat), lng: parseFloat(userLong) }
-    ];
-
-    this.createLineBetweenPoints(path);
-    this.userTerrorismZone = "";
-    this.userTheftZone = "";
-    this.displayElement("indicatorTheft", "none");
-    this.displayElement("indicatorTerrorism", "none");
-    var infoToShow = 0;
-
-    if (nearMarker.theftId != "") {
-      var infoTheft = this.getMessage(nearMarker.theftId, "theft");
-      this.userTheftZone = infoTheft[0];
-      (<HTMLInputElement>document.getElementById("indicatorTheft")).className = infoTheft[1];
-      infoToShow += 1;
-      this.displayElement("indicatorTheft", "inline");
-    }
-
-    if (nearMarker.terrorismId != "") {
-      var infoTerrorism = this.getMessage(nearMarker.terrorismId, "terrorism");
-      this.userTerrorismZone = infoTerrorism[0];
-      (<HTMLInputElement>document.getElementById("indicatorTerrorism")).className = infoTerrorism[1];
-      infoToShow += 1;
-      this.displayElement("indicatorTerrorism", "inline");
-    }
-
-    (<HTMLInputElement>document.getElementById("divisor")).style.display = (infoToShow == 2 ? "inline" : "none");
-
-    if (!this.isShowingMessage && !this.dontAskAgain && nearMarker.theftId == 1 && !this.isSharingLocation && this.askAlertAgain()) {
+  showAlertCard(nearMarker) {
+    if (this.canShowAlert() && nearMarker.theftId == 1 && !this.isSharingLocation && this.askAlertAgain()) {
       this.isShowingMessage = true;
       this.notifyAlert();
     }
 
-    if (!this.isShowingMessage && !this.dontAskAgain && nearMarker.theftId != 1 && this.isSharingLocation && this.askSafeAgain()) {
+    if (this.canShowAlert() && nearMarker.theftId != 1 && this.isSharingLocation && this.askSafeAgain()) {
       this.isShowingMessage = true;
       this.notifySafe();
     }
+  }
+
+  canShowAlert() {
+    return !this.isShowingMessage && !this.dontAskAgain;
+  }
+
+  updateRiskMessages(nearMarker) {
+    this.resetRiskMessages();
+
+    if (nearMarker.theftId != "") {
+      var infoTheft = this.getRiskMessage(nearMarker.theftId, "theft");
+      this.userTheftZone = infoTheft[0];
+      (<HTMLInputElement>document.getElementById("indicatorTheft")).className = infoTheft[1];
+      this.displayElement("indicatorTheft", "inline");
+    }
+
+    if (nearMarker.terrorismId != "") {
+      var infoTerrorism = this.getRiskMessage(nearMarker.terrorismId, "terrorism");
+      this.userTerrorismZone = infoTerrorism[0];
+      (<HTMLInputElement>document.getElementById("indicatorTerrorism")).className = infoTerrorism[1];
+      this.displayElement("indicatorTerrorism", "inline");
+    }
+  }
+
+  resetRiskMessages() {
+    this.userTerrorismZone = "";
+    this.userTheftZone = "";
+    this.displayElement("indicatorTheft", "none");
+    this.displayElement("indicatorTerrorism", "none");
+  }
+
+  createLineBetweenUserMarker(nearMarker, userPosition) {
+    var path = [
+      { lat: parseFloat(nearMarker.lat), lng: parseFloat(nearMarker.lng) },
+      { lat: parseFloat(userPosition.lat), lng: parseFloat(userPosition.lng) }
+    ];
+    this.createLineBetweenPoints(path);
   }
 
   async shareUbication() {
@@ -398,8 +397,8 @@ export class HomePage {
     }
   }
 
-  saveLocations() {
-    this.storage.set("locationsArray", this.countryInfo);
+  saveCountryData() {
+    this.storage.set(this.KEY_COUNTRY_DATA, this.countryInfo);
   }
 
   createLineBetweenPoints(path) {
@@ -452,10 +451,11 @@ export class HomePage {
     return false;
   }
 
-  async showLastUbication(ubication) {
+  async showLastUserShareUbication(ubication) {
     ubication = JSON.parse(ubication);
     if (!this.isNullOrEmpty(ubication)) {
-      this.updateUserShareLocationMarker(this.createLatLngObj(ubication["lat"], ubication["lng"]));
+      this.shareUser = this.createLatLngObj(ubication["lat"], ubication["lng"]);
+      this.updateUserShareLocationMarker();
     }
   }
 
@@ -464,30 +464,9 @@ export class HomePage {
     userRef.valueChanges()
       .subscribe(res => {
         if (res && res["ubication"]) {
-          this.showLastUbication(res["ubication"]);
+          this.showLastUserShareUbication(res["ubication"]);
         }
       });
-  }
-
-  getMessage(indicator, type) {
-    indicator = String(indicator);
-    if (type == "theft") {
-      switch (indicator) {
-        case "3":
-          return ['Riesgo hurto: bajo', 'lowTheftRisk'];
-        case "2":
-          return ['Riesgo hurto: medio', 'mediumTheftRisk'];
-        case "1":
-          return ['Riesgo hurto: alto', 'highTheftRisk'];
-      }
-    } else {
-      switch (indicator) {
-        case "3":
-          return ['Riesgo terrorismo: bajo', 'lowTerrorismRisk'];
-        case "1":
-          return ['Riesgo terrorismo: alto', 'highTerrorismRisk'];
-      }
-    }
   }
 
   setUserMarker() {
@@ -503,68 +482,95 @@ export class HomePage {
     });
   }
 
-  getLocations({ country, department, city }) {
-    this.storage.get("locationsArray").then((res) => {
-      if (res != null && res != "") {
-        this.countryInfo = new Country(res.country, res.departments);
-        this.getLocationsInfo(department, city);
-      } else {
-        this.getLocationsFirebase(country, department, city);
-      }
-    });
-  }
-
-  async getLocationsFirebase(country, department, city) {
-    this.af.list("/").valueChanges().subscribe(val => {
-      var countryInfo: Country = new Country(val[0], val[1]);
-      this.storage.set("locationsArray", countryInfo);
-      this.countryInfo = countryInfo;
-      this.getLocationsInfo(department, city);
-    });
-  }
-
-  getLocationsInfo(departmentQuery, cityQuery) {
-    var departments: Department[] = this.countryInfo.departments;
-    var departmentToLoad = departments.find(department => this.compareStrings(department.department, departmentQuery));
-    var cityToLoad = departmentToLoad.cities.find(city => this.compareStrings(city.city, cityQuery));
-    if (cityToLoad) {
-      this.loadLocalities(cityToLoad.locations, `${this.countryInfo.country} ${departmentQuery} ${cityQuery}`);
-    }
-  }
-
-  async loadLocalities(locationsToLoad: Location[], query) {
+  async loadLocalities(locationsToLoad: Location[], locationCity: LocationCity) {
     for (var location of locationsToLoad) {
       if (location && !this.isNullOrEmpty(location.location)) {
-        this.createIndicator(location, query);
+        this.createIndicator(location, locationCity);
       }
     }
     setTimeout(() => {
-      this.saveLocations();
-    }, 10000);
+      this.saveCountryData();
+    }, 3000);
   }
 
-  createIndicator(location: Location, query) {
-    query = `${query} ${location.location}`;
+  createIndicator(location: Location, locationCity: LocationCity) {
+    var LOCATION_NOT_FINDED = "ZERO_RESULTS";
+    var addresToSearch = `${locationCity.getStringAddress()} ${location.location}`;
+
+    if (!location.googleCanFindLocation()) {
+      return;
+    }
+
     if (location.isLatLongDefined()) {
-      var newMarker = new Marker(location);
-      this.arrayMarkers.push(newMarker);
-      this.createLocationMarker(location);
-    } else {
-      this.getGeoCodefromGoogleAPI(query).subscribe(addressData => {
+      this.saveIndicator(location);
+    }
+    else {
+      this.getGeoCodefromGoogleAPI(addresToSearch).subscribe(addressData => {
+
+        if (addressData.status == LOCATION_NOT_FINDED) {
+          location.lat = "none"; // do not search again
+          location.lng = "none";
+          return;
+        }
+
         if (addressData && addressData.results[0]) {
           let lat: string = addressData.results[0].geometry.location.lat;
-          let long: string = addressData.results[0].geometry.location.lng;
-          location.lat = lat;
-          location.lng = long;
-          var marker = new Marker(location);
-          this.arrayMarkers.push(marker);
-          this.createLocationMarker(location);
+          let lng: string = addressData.results[0].geometry.location.lng;
+          location.setLatLng(lat, lng);
+          this.saveIndicator(location);
         }
       });
     }
   }
 
+  saveIndicator(location: Location) {
+    var newMarker = new Marker(location);
+    this.arrayMarkers.push(newMarker);
+    this.createLocationMarker(location);
+  }
+
+
   // Generic methods
+
+  createTerrorismCircle(location: Location, map) {
+    new google.maps.Circle({
+      strokeColor: this.getColor(location.terrorismId, "terrorism"),
+      strokeOpacity: 1,
+      strokeWeight: 3,
+      fillOpacity: 0,
+      map: map,
+      center: location.getLatLng(),
+      radius: 70
+    });
+  }
+
+  createTheftCircle(location: Location, map) {
+    new google.maps.Circle({
+      strokeColor: '#DAD7D6',
+      strokeOpacity: 0.8,
+      strokeWeight: 1,
+      fillColor: this.getColor(location.theftId, "theft"),
+      fillOpacity: 0.35,
+      map: map,
+      center: location.getLatLng(),
+      radius: 70
+    });
+  }
+
+  createCard(location: Location) {
+    var contentCard = '<div id=content">';
+    contentCard += ('<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">' + location.location + '</h1>');
+    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>' + this.getTypeIndex(location.theftId) + '</div>');
+    contentCard += ('<div id="bodyContent"> <strong>Número de hurtos: </strong>' + location.theftRating + '</div>');
+    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>' + this.getTypeIndex(location.terrorismId) + '</div>');
+    contentCard += ('<div id="bodyContent"> <strong>Número de atentados: </strong>' + location.terrorismRating + '</div>');
+    contentCard += '</div>';
+    return contentCard;
+  }
+
+  calculateDistance(point1, point2) {
+    return Math.sqrt(Math.pow(point1.lat - point2.lat, 2) + Math.pow(point1.lng - point2.lng, 2))
+  }
 
   createLatLngObj(latArg, lngArg) { return { lat: Number(latArg), lng: Number(lngArg) }; }
 
@@ -593,6 +599,27 @@ export class HomePage {
         return '../../assets/icon/man.png';
       default:
         return '../../assets/icon/blue-dot.png';
+    }
+  }
+
+  getRiskMessage(indicator, type) {
+    indicator = String(indicator);
+    if (type == "theft") {
+      switch (indicator) {
+        case "3":
+          return ['Riesgo hurto: bajo', 'lowTheftRisk'];
+        case "2":
+          return ['Riesgo hurto: medio', 'mediumTheftRisk'];
+        case "1":
+          return ['Riesgo hurto: alto', 'highTheftRisk'];
+      }
+    } else {
+      switch (indicator) {
+        case "3":
+          return ['Riesgo terrorismo: bajo', 'lowTerrorismRisk'];
+        case "1":
+          return ['Riesgo terrorismo: alto', 'highTerrorismRisk'];
+      }
     }
   }
 

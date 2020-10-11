@@ -4,7 +4,12 @@
 
     <ion-title class="logo_title">Trasafe</ion-title>
 
-    <ion-button class="button_where" (click)="centerMap()" shape="round" fill="outline">
+    <ion-button class="button_where" (click)="centerShareUser()" shape="round" fill="outline">
+      <ion-icon slot="start" name="locate"></ion-icon>
+      Usuario compartido
+    </ion-button>
+
+    <ion-button class="button_where" (click)="centerUserMap()" shape="round" fill="outline">
       <ion-icon slot="start" name="locate"></ion-icon>
       ¿Dónde estoy?
     </ion-button>
@@ -37,7 +42,6 @@
 
     <div class="divUserZone">
       <span id="indicatorTheft">{{userTheftZone}}</span>
-      <span id="divisor" style="padding-right: 10px;"></span>
       <span id="indicatorTerrorism">{{userTerrorismZone}}</span>
     </div>
 

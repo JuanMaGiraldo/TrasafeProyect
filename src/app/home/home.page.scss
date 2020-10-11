@@ -147,7 +147,8 @@
 }
 
 .divUserZone{
-  display: block;
+  display: flex;
+  justify-content: space-around;
   align-items: center;
   overflow: hidden; 
   text-align: center;
