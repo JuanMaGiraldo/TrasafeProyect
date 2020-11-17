@@ -73,7 +73,6 @@ export class Location {
     }
 
     public setLatLng(lat, lng) {
-        console.log("set: ", lat, lng)
         this.lat = lat;
         this.lng = lng;
     }

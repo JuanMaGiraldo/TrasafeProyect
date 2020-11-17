@@ -28,9 +28,7 @@ export class HomePage {
   KEY_COUNTRY_DATA = "locationsArray";
   error: string = "";
   console: string = "";
-  marker: any;
   line: any;
-  areIndicatorsLoaded: boolean = false;
   arrayMarkers: Marker[] = [];
   isSharingLocation: boolean;
   lastAlert: Date;
@@ -39,7 +37,7 @@ export class HomePage {
   srcIndicator: string;
   userTheftZone: string;
   userTerrorismZone: string;
-  actualUbication: any;
+  userActualPosition: any;
   mapOptions: any;
   isTracking: boolean;
   postionSubscription: Subscription;
@@ -50,7 +48,6 @@ export class HomePage {
   arrayLocalities: any[];
   localitiesLoaded: string[];
   uid: string = "";
-  markerShareUbication: any = null;
   idUser: string = "";
   idUserShow: string = "";
   flagUserConnectedWithUser: boolean = false;
@@ -58,6 +55,9 @@ export class HomePage {
   locationsToUpdate: any;
   searchBox: any;
   shareUser: any = null;
+  userMarker: any;
+  destinationMarker: any;
+  shareUbicationMarker: any;
 
   constructor(
 
@@ -83,7 +83,7 @@ export class HomePage {
     this.lastSafe = null;
     this.dontAskAgain = false;
     this.srcIndicator = "";
-    this.actualUbication = null;
+    this.userActualPosition = null;
     this.trackingUbication = "";
     this.localitiesLoaded = [];
     this.locationsToUpdate = new Array();
@@ -94,36 +94,34 @@ export class HomePage {
 
   ngAfterViewInit() {
     this.loadMap();
+    this.initializeAutocompleteInput();
   }
 
   loadMap() {
-    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
-    this.initAutocomplete();
-    this.whereIAm();
-    this.startTracking()
+    this.createMap();
+    this.loadInitInfoFromUserPosition();
+    this.trackUserPosition()
   }
 
-  initAutocomplete() {
+  createMap() {
+    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
+  }
+
+  initializeAutocompleteInput() {
     var input = document.getElementById('pac-input');
     this.searchBox = new google.maps.places.SearchBox(input);
-    console.log(this.searchBox);
   }
 
-  whereIAm() {
+  loadInitInfoFromUserPosition() {
     this.geolocation.getCurrentPosition()
       .then(({ coords }) => {
-        this.actualUbication = this.createLatLngObj(coords.latitude, coords.longitude);
+        this.userActualPosition = this.createLatLngObj(coords.latitude, coords.longitude);
         this.centerUserMap();
-        this.loadIndicatorsFromCoords(this.actualUbication);
+        this.loadIndicatorsFromCoords(this.userActualPosition);
       })
       .catch((error) => {
         this.error = `Error where i am: ${error}`;
       });
-  }
-
-  getUserSearchPlace() {
-    console.log(this.searchBox)
-    return (this.searchBox ? this.searchBox.gm_accessors_.places.oe.formattedPrediction : "");
   }
 
   searchInfoPlace() {
@@ -132,35 +130,42 @@ export class HomePage {
       this.getGeoCodefromGoogleAPI(placeToSearch).subscribe(addressData => {
         var location = addressData.results[0].geometry.location;
         var latLng = this.createLatLngObj(location.lat, location.lng);
-        this.map.setCenter(latLng);
-        this.map.setZoom(17);
+        this.centerMap(latLng);
+        this.updateDestinationMarker(latLng);
         this.loadIndicatorsFromCoords(latLng);
       });
     }
   }
 
+  getUserSearchPlace() {
+    return (this.searchBox ? this.searchBox.gm_accessors_.places.se.formattedPrediction : "");
+  }
+
   centerUserMap() {
-    this.map.setCenter(this.actualUbication);
-    this.map.setZoom(17);
+    this.centerMap(this.userActualPosition);
   }
 
   centerShareUser() {
-    this.map.setCenter(this.shareUser);
+    this.centerMap(this.shareUser);
+  }
+
+  centerMap(position) {
+    this.map.setCenter(position);
     this.map.setZoom(17);
   }
 
-  startTracking() {
+  trackUserPosition() {
     this.postionSubscription = this.geolocation.watchPosition()
       .pipe(
         filter(p => p.coords != undefined)
       )
       .subscribe(data => {
         setTimeout(() => {
-          //this.actualUbication = {lat: data.coords.latitude, lng: data.coords.longitude};       //Testing locations 
-          this.actualUbication = { lat: this.map.center.lat(), lng: this.map.center.lng() }
-          if (this.userChangePosition(this.actualUbication)) {
-            this.setUserMarker();
-            this.getNearestLocation();
+          //this.userActualPosition = this.createLatvar GOOGLE_KEY = '&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU';Lng(lat: data.coords.latitude, lng: data.coords.longitude};       //Testing locations 
+          this.userActualPosition = this.createLatLngObj(this.map.center.lat(), this.map.center.lng());
+          if (this.userHasChangePosition(this.userActualPosition)) {
+            this.updateUserMarker();
+            this.getNearestLocationToUser();
           }
         });
       });
@@ -181,47 +186,59 @@ export class HomePage {
   }
 
   getGeoCodefromGoogleAPI(address: string): Observable<any> {
-    return this._http.get('https://maps.googleapis.com/maps/api/geocode/json?address=' + address + "&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU");
+    var URL_API_GEOCODE = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
+    var GOOGLE_KEY = '&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU';
+    return this._http.get(`${URL_API_GEOCODE}${address}${GOOGLE_KEY}`);
   }
 
-  updateUserMarker(latLng) {
+  updateUserMarker() {
+    this.deleteLastMarker(this.userMarker);
     var map = this.map;
 
-    if (this.marker) {
-      this.marker.setMap(null);
-    }
-    this.lastTrackUbication = latLng;
     var marker = new google.maps.Marker({
-      position: latLng,
-      map: map
+      position: this.userActualPosition,
+      map: map,
+      icon: this.getMarketIcon("ubication")
     });
 
-    this.marker = marker;
+    this.userMarker = marker;
   }
 
   updateUserShareLocationMarker() {
+    this.deleteLastMarker(this.shareUbicationMarker);
     var map = this.map;
-
-    if (this.markerShareUbication) {
-      this.markerShareUbication.setMap(null);
-    }
 
     var marker = new google.maps.Marker({
       position: this.shareUser,
       map: map,
       icon: this.getMarketIcon("ubication")
     });
-    this.markerShareUbication = marker;
+
+    this.shareUbicationMarker = marker;
+  }
+
+  updateDestinationMarker(latLng) {
+    this.deleteLastMarker(this.destinationMarker);
+    var map = this.map;
+
+    var marker = new google.maps.Marker({
+      position: latLng,
+      map: map
+    });
+
+    this.destinationMarker = marker;
+  }
+
+  deleteLastMarker(marker) {
+    if (marker) {
+      marker.setMap(null);
+    }
   }
 
   createLocationMarker(location: Location) {
-    var contentCard = this.createCard(location);
     var map = this.map;
-    var TIME_CLOSE_CARD = 2000;
-
-    var infowindow = new google.maps.InfoWindow({
-      content: contentCard
-    });
+    var TIME_STOP_ANIMATION = 2000;
+    var contentCard = this.createContentCard(location);
     var urlIcon = this.getMarketIcon(location.theftId);
 
     var marker = new google.maps.Marker({
@@ -230,12 +247,14 @@ export class HomePage {
       icon: urlIcon
     });
 
+    var infowindow = new google.maps.InfoWindow({
+      content: contentCard
+    });
+
     marker.addListener('click', function () {
       infowindow.open(map, marker);
       marker.setAnimation(google.maps.Animation.BOUNCE);
-      setTimeout(function () {
-        marker.setAnimation(null);
-      }, TIME_CLOSE_CARD);
+      setTimeout(marker.setAnimation(null), TIME_STOP_ANIMATION);
     });
 
     if (location.theftId != "") {
@@ -305,24 +324,28 @@ export class HomePage {
     }
   }
 
-  getNearestLocation() {
+  getNearestLocationToUser() {
+    var nearMarker = this.getNearestLocation(this.arrayMarkers);
+    if (nearMarker) {
+      this.createLineBetweenUserMarker(nearMarker.coords, this.userActualPosition);
+      this.updateRiskMessages(nearMarker);
+      this.showAlertCard(nearMarker);
+    }
+  }
+
+  getNearestLocation(arrayMarkers) {
     var nearDistance = null;
     var nearMarker = null;
-    var userPosition = this.actualUbication;
 
-    for (var marker of this.arrayMarkers) {
-      var distanceBetweenUserMarker = this.calculateDistance(marker.coords, userPosition);
+    for (var marker of arrayMarkers) {
+      var distanceBetweenUserMarker = this.calculateDistance(marker.coords, this.userActualPosition);
       if (nearDistance == null || nearDistance > distanceBetweenUserMarker) {
         nearDistance = distanceBetweenUserMarker;
         nearMarker = marker;
       }
     }
 
-    if (nearMarker) {
-      this.createLineBetweenUserMarker(nearMarker.coords, userPosition);
-      this.updateRiskMessages(nearMarker);
-      this.showAlertCard(nearMarker);
-    }
+    return nearMarker;
   }
 
   showAlertCard(nearMarker) {
@@ -375,17 +398,17 @@ export class HomePage {
   }
 
   async shareUbication() {
-
     var i = 1;
+
     if (this.isSharingLocation) {
-      this.firebaseService.saveNewUbication(JSON.stringify(this.actualUbication), this.uid);
+      this.firebaseService.saveNewUbication(JSON.stringify(this.userActualPosition), this.uid);
     } // The interval only starts after 5 seconds.
     var interval = setInterval(() => {
       if (!this.isSharingLocation || i == 20) {
         clearInterval(interval);
       }
       else {
-        this.firebaseService.saveNewUbication(JSON.stringify(this.actualUbication), this.uid);
+        this.firebaseService.saveNewUbication(JSON.stringify(this.userActualPosition), this.uid);
       }
     }, 5000);
   }
@@ -425,10 +448,9 @@ export class HomePage {
     this.line = line;
   }
 
-  userChangePosition(latLng) {
+  userHasChangePosition(latLng) {
     return this.lastTrackUbication == null || latLng.lat != this.lastTrackUbication["lat"] || latLng.long != this.lastTrackUbication["lng"];
   }
-
 
   askAlertAgain() {
     return this.compareDates(this.lastAlert);
@@ -469,10 +491,6 @@ export class HomePage {
       });
   }
 
-  setUserMarker() {
-    this.updateUserMarker(this.createLatLngObj(this.actualUbication.lat, this.actualUbication.lng));
-  }
-
   getUid() {
     this.storage.get('uid').then((val) => {
       if (val != null && val != "") {
@@ -495,17 +513,17 @@ export class HomePage {
 
   createIndicator(location: Location, locationCity: LocationCity) {
     var LOCATION_NOT_FINDED = "ZERO_RESULTS";
-    var addresToSearch = `${locationCity.getStringAddress()} ${location.location}`;
+    var addressToSearch = `${locationCity.getStringAddress()} ${location.location}`;
 
     if (!location.googleCanFindLocation()) {
       return;
     }
 
     if (location.isLatLongDefined()) {
-      this.saveIndicator(location);
+      this.createLocationIndicator(location);
     }
     else {
-      this.getGeoCodefromGoogleAPI(addresToSearch).subscribe(addressData => {
+      this.getGeoCodefromGoogleAPI(addressToSearch).subscribe(addressData => {
 
         if (addressData.status == LOCATION_NOT_FINDED) {
           location.lat = "none"; // do not search again
@@ -517,18 +535,17 @@ export class HomePage {
           let lat: string = addressData.results[0].geometry.location.lat;
           let lng: string = addressData.results[0].geometry.location.lng;
           location.setLatLng(lat, lng);
-          this.saveIndicator(location);
+          this.createLocationIndicator(location);
         }
       });
     }
   }
 
-  saveIndicator(location: Location) {
+  createLocationIndicator(location: Location) {
     var newMarker = new Marker(location);
     this.arrayMarkers.push(newMarker);
     this.createLocationMarker(location);
   }
-
 
   // Generic methods
 
@@ -557,7 +574,7 @@ export class HomePage {
     });
   }
 
-  createCard(location: Location) {
+  createContentCard(location: Location) {
     var contentCard = '<div id=content">';
     contentCard += ('<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">' + location.location + '</h1>');
     contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>' + this.getTypeIndex(location.theftId) + '</div>');

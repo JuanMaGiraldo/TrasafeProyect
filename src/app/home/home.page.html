@@ -4,7 +4,7 @@
 
     <ion-title class="logo_title">Trasafe</ion-title>
 
-    <ion-button class="button_where" (click)="centerShareUser()" shape="round" fill="outline">
+    <ion-button class="button_where" *ngIf="shareUser" (click)="centerShareUser()" shape="round" fill="outline">
       <ion-icon slot="start" name="locate"></ion-icon>
       Usuario compartido
     </ion-button>

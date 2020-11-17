@@ -15,21 +15,21 @@ export class LoginPage implements OnInit {
 
   validations_form: FormGroup;
   errorMessage: string = '';
- 
+
   constructor(
- 
+
     private navCtrl: NavController,
     private authService: AuthenticationService,
     private formBuilder: FormBuilder,
     private storage: Storage,
     private splashscreen: SplashScreen
- 
-  ) { 
+
+  ) {
     this.verifyUser();
   }
- 
+
   ngOnInit() {
-    
+
 
     this.validations_form = this.formBuilder.group({
       email: new FormControl('', Validators.compose([
@@ -45,25 +45,24 @@ export class LoginPage implements OnInit {
     this.reloadApp();
   }
 
-  async verifyUser(){
+  async verifyUser() {
     this.storage.get('uid').then((val) => {
-      if(val != null && val != ""){
+      if (val != null && val != "") {
         this.goToApplication();
       }
-    });    
+    });
   }
- 
-  async reloadApp(){
+
+  async reloadApp() {
     this.storage.get("reload").then((val) => {
-      if(val != null && val != "" && val == "yes"){
+      if (val != null && val != "" && val == "yes") {
         this.splashscreen.show();
         window.location.reload(true);
-        this.storage.set("reload","");
+        this.storage.set("reload", "");
       }
     });
-    
   }
- 
+
   validation_messages = {
     'email': [
       { type: 'required', message: 'Email es requerido.' },
@@ -74,25 +73,25 @@ export class LoginPage implements OnInit {
       { type: 'minlength', message: 'La contraseña debe de contener al menos 6 caracteres.' }
     ]
   };
- 
- 
-  async loginUser(value){
+
+
+  async loginUser(value) {
     this.authService.loginUser(value)
-    .then(res => {        
-      if(res){
-        this.storage.set('uid',res.user.uid);        
-        this.goToApplication();
-      }
-    }, err => {
-      this.errorMessage = err.message;      
-    });    
+      .then(res => {
+        if (res) {
+          this.storage.set('uid', res.user.uid);
+          this.goToApplication();
+        }
+      }, err => {
+        this.errorMessage = err.message;
+      });
   }
- 
-  goToRegisterPage(){
+
+  goToRegisterPage() {
     this.navCtrl.navigateForward('/register');
   }
 
-  goToApplication(){
+  goToApplication() {
     this.navCtrl.navigateForward('/loadinfo');
   }
 
