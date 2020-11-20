@@ -161,8 +161,8 @@ export class HomePage {
       )
       .subscribe(data => {
         setTimeout(() => {
-          //this.userActualPosition = this.createLatvar GOOGLE_KEY = '&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU';Lng(lat: data.coords.latitude, lng: data.coords.longitude};       //Testing locations 
-          this.userActualPosition = this.createLatLngObj(this.map.center.lat(), this.map.center.lng());
+          this.userActualPosition = this.createLatLngObj( data.coords.latitude, data.coords.longitude);    
+          //this.userActualPosition = this.createLatLngObj(this.map.center.lat(), this.map.center.lng());
           if (this.userHasChangePosition(this.userActualPosition)) {
             this.updateUserMarker();
             this.getNearestLocationToUser();
@@ -269,7 +269,6 @@ export class HomePage {
   loadIndicatorsFromCoords({ lat, lng }) {
     this.getAddresFromCoordsApi(lat, lng).subscribe(addressData => {
       var locationCity = this.getInfoAddressFormCoords(addressData);
-
       if (locationCity.isLocationCityDefined()) {
         this.loadCityZones(locationCity);
       }
@@ -290,8 +289,17 @@ export class HomePage {
   }
 
   getResponseAddressFromCoords(addressData) {
-    var coords = addressData["results"];
-    return (coords[coords.length - 3])["formatted_address"].split(",");
+    var address = addressData["plus_code"]["compound_code"];        
+    var addressArray = address.split(",");
+    addressArray[0] = this.removeCodeCity(addressArray[0]);
+    return addressArray;
+    //return (coords[3])["formatted_address"].split(",");
+  }
+
+  removeCodeCity(city){
+    city = city.split(" ");
+    city.shift();
+    return city.join(" ");
   }
 
   async loadCityZones(locationCity: LocationCity) {
