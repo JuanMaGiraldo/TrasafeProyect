@@ -143,7 +143,7 @@ export class HomePage {
 
   getUserSearchPlace() {
     return this.searchBox
-      ? this.searchBox.gm_accessors_.places.se.formattedPrediction
+      ? this.searchBox.gm_accessors_.places.qe.formattedPrediction
       : "";
   }
 
@@ -166,16 +166,11 @@ export class HomePage {
       .pipe(filter((p) => p.coords != undefined))
       .subscribe((data) => {
         setTimeout(() => {
-<<<<<<< HEAD
-          this.userActualPosition = this.createLatLngObj( data.coords.latitude, data.coords.longitude);    
-          //this.userActualPosition = this.createLatLngObj(this.map.center.lat(), this.map.center.lng());
-=======
           //this.userActualPosition = this.createLatvar GOOGLE_KEY = '&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU';Lng(lat: data.coords.latitude, lng: data.coords.longitude};       //Testing locations
           this.userActualPosition = this.createLatLngObj(
             this.map.center.lat(),
             this.map.center.lng()
           );
->>>>>>> formatting docs
           if (this.userHasChangePosition(this.userActualPosition)) {
             this.updateUserMarker();
             this.getNearestLocationToUser();
@@ -303,6 +298,7 @@ export class HomePage {
 
   getInfoAddressFormCoords(addressData) {
     var arrayInfo = this.getResponseAddressFromCoords(addressData);
+
     var locationCity = new LocationCity();
     locationCity.setCountry(arrayInfo[2]);
     locationCity.setDepartment(arrayInfo[1]);
@@ -311,22 +307,13 @@ export class HomePage {
   }
 
   getResponseAddressFromCoords(addressData) {
-<<<<<<< HEAD
-    var address = addressData["plus_code"]["compound_code"];        
-    var addressArray = address.split(",");
-    addressArray[0] = this.removeCodeCity(addressArray[0]);
-    return addressArray;
-    //return (coords[3])["formatted_address"].split(",");
-  }
-
-  removeCodeCity(city){
-    city = city.split(" ");
-    city.shift();
-    return city.join(" ");
-=======
     var coords = addressData["results"];
-    return coords[coords.length - 3]["formatted_address"].split(",");
->>>>>>> formatting docs
+    for (let coord in coords) {
+      let addreess = coords[coord];
+      if (addreess["address_components"].length == 3) {
+        return addreess["formatted_address"].split(",");
+      }
+    }
   }
 
   async loadCityZones(locationCity: LocationCity) {
