@@ -1,4 +1,5 @@
 import { Location } from '../models/country';
+
 export class Marker {
     coords: any;
     location: string;

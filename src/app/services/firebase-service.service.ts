@@ -27,9 +27,7 @@ export class FirebaseServiceService {
           err => reject(err)
         )
     })
-  }
-
-  
+  }  
 
   getUser(){
     var val;

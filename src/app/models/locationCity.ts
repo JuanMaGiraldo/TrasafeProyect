@@ -3,6 +3,14 @@ export class LocationCity {
     private departmentName: string = "";
     private cityName: string = "";
 
+    getStringAddress() {
+        return `${this.countryName} ${this.departmentName} ${this.cityName}`;
+    }
+
+    isLocationCityDefined() {
+        return this.getCountry() && this.getDepartment() && this.getCity();
+    }
+
     getCountry() {
         return this.countryName;
     }
@@ -23,15 +31,13 @@ export class LocationCity {
         this.departmentName = departmentName.trim();
     }
 
-    setCity(cityName) {
-        this.cityName = cityName.trim();
-    }
-
-    getStringAddress() {
+    setCity(cityName) {getStringAddress() {
         return `${this.countryName} ${this.departmentName} ${this.cityName}`;
     }
 
     isLocationCityDefined() {
         return this.getCountry() && this.getDepartment() && this.getCity();
     }
+        this.cityName = cityName.trim();
+    }    
 }

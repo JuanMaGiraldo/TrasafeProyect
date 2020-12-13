@@ -1,29 +1,28 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
-import { Geolocation } from '@ionic-native/geolocation/ngx';
-import { Marker } from '../models/marker';
-import { AlertController } from '@ionic/angular';
-import { FirebaseServiceService } from '../services/firebase-service.service';
-import { AngularFirestore } from '@angular/fire/firestore';
-import { AuthenticationService } from '../services/authentication.service';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { Storage } from '@ionic/storage';
-import { AngularFireDatabase } from '@angular/fire/database';
-import { Country, Department, City, Location } from '../models/country';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { LocationCity } from '../models/locationCity';
+import { Component, ViewChild, ElementRef } from "@angular/core";
+import { Geolocation } from "@ionic-native/geolocation/ngx";
+import { Marker } from "../models/marker";
+import { AlertController } from "@ionic/angular";
+import { FirebaseServiceService } from "../services/firebase-service.service";
+import { AngularFirestore } from "@angular/fire/firestore";
+import { AuthenticationService } from "../services/authentication.service";
+import { Subscription } from "rxjs";
+import { filter } from "rxjs/operators";
+import { Storage } from "@ionic/storage";
+import { AngularFireDatabase } from "@angular/fire/database";
+import { Country, Department, City, Location } from "../models/country";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
+import { LocationCity } from "../models/locationCity";
 
 declare var google;
 
 @Component({
-  selector: 'app-home',
-  templateUrl: 'home.page.html',
-  styleUrls: ['home.page.scss'],
+  selector: "app-home",
+  templateUrl: "home.page.html",
+  styleUrls: ["home.page.scss"],
 })
 export class HomePage {
-
-  @ViewChild('map', { static: false }) mapElement: ElementRef;
+  @ViewChild("map", { static: false }) mapElement: ElementRef;
   map: any;
   KEY_COUNTRY_DATA = "locationsArray";
   error: string = "";
@@ -60,7 +59,6 @@ export class HomePage {
   shareUbicationMarker: any;
 
   constructor(
-
     private geolocation: Geolocation,
     private alertController: AlertController,
     private firebaseService: FirebaseServiceService,
@@ -69,15 +67,14 @@ export class HomePage {
     private af: AngularFireDatabase,
     private storage: Storage,
     private _http: HttpClient
-
   ) {
     this.mapOptions = {
       zoom: 17,
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       mapTypeControl: false,
       streetViewContr1ol: false,
-      fullscreenControl: false
-    }
+      fullscreenControl: false,
+    };
     this.isSharingLocation = false;
     this.lastAlert = null;
     this.lastSafe = null;
@@ -90,7 +87,7 @@ export class HomePage {
     this.getUid();
   }
 
-  ngOnInit() { }
+  ngOnInit() {}
 
   ngAfterViewInit() {
     this.loadMap();
@@ -100,22 +97,29 @@ export class HomePage {
   loadMap() {
     this.createMap();
     this.loadInitInfoFromUserPosition();
-    this.trackUserPosition()
+    this.trackUserPosition();
   }
 
   createMap() {
-    this.map = new google.maps.Map(this.mapElement.nativeElement, this.mapOptions);
+    this.map = new google.maps.Map(
+      this.mapElement.nativeElement,
+      this.mapOptions
+    );
   }
 
   initializeAutocompleteInput() {
-    var input = document.getElementById('pac-input');
+    var input = document.getElementById("pac-input");
     this.searchBox = new google.maps.places.SearchBox(input);
   }
 
   loadInitInfoFromUserPosition() {
-    this.geolocation.getCurrentPosition()
+    this.geolocation
+      .getCurrentPosition()
       .then(({ coords }) => {
-        this.userActualPosition = this.createLatLngObj(coords.latitude, coords.longitude);
+        this.userActualPosition = this.createLatLngObj(
+          coords.latitude,
+          coords.longitude
+        );
         this.centerUserMap();
         this.loadIndicatorsFromCoords(this.userActualPosition);
       })
@@ -127,7 +131,7 @@ export class HomePage {
   searchInfoPlace() {
     var placeToSearch = this.getUserSearchPlace();
     if (placeToSearch) {
-      this.getGeoCodefromGoogleAPI(placeToSearch).subscribe(addressData => {
+      this.getGeoCodefromGoogleAPI(placeToSearch).subscribe((addressData) => {
         var location = addressData.results[0].geometry.location;
         var latLng = this.createLatLngObj(location.lat, location.lng);
         this.centerMap(latLng);
@@ -138,7 +142,9 @@ export class HomePage {
   }
 
   getUserSearchPlace() {
-    return (this.searchBox ? this.searchBox.gm_accessors_.places.se.formattedPrediction : "");
+    return this.searchBox
+      ? this.searchBox.gm_accessors_.places.se.formattedPrediction
+      : "";
   }
 
   centerUserMap() {
@@ -155,14 +161,21 @@ export class HomePage {
   }
 
   trackUserPosition() {
-    this.postionSubscription = this.geolocation.watchPosition()
-      .pipe(
-        filter(p => p.coords != undefined)
-      )
-      .subscribe(data => {
+    this.postionSubscription = this.geolocation
+      .watchPosition()
+      .pipe(filter((p) => p.coords != undefined))
+      .subscribe((data) => {
         setTimeout(() => {
+<<<<<<< HEAD
           this.userActualPosition = this.createLatLngObj( data.coords.latitude, data.coords.longitude);    
           //this.userActualPosition = this.createLatLngObj(this.map.center.lat(), this.map.center.lng());
+=======
+          //this.userActualPosition = this.createLatvar GOOGLE_KEY = '&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU';Lng(lat: data.coords.latitude, lng: data.coords.longitude};       //Testing locations
+          this.userActualPosition = this.createLatLngObj(
+            this.map.center.lat(),
+            this.map.center.lng()
+          );
+>>>>>>> formatting docs
           if (this.userHasChangePosition(this.userActualPosition)) {
             this.updateUserMarker();
             this.getNearestLocationToUser();
@@ -172,22 +185,29 @@ export class HomePage {
   }
 
   confirmId(id) {
-    this.db.collection("/users", ref => ref.where('id', '==', id)).valueChanges().subscribe(res => {
-      if (res && res[0] && res[0]["uid"]) {
-        if (!this.flagUserConnectedWithUser) {
-          this.createAlert("Éxito!", "Conexión éxitosa.");
-          this.flagUserConnectedWithUser = true;
+    this.db
+      .collection("/users", (ref) => ref.where("id", "==", id))
+      .valueChanges()
+      .subscribe((res) => {
+        if (res && res[0] && res[0]["uid"]) {
+          if (!this.flagUserConnectedWithUser) {
+            this.createAlert("Éxito!", "Conexión éxitosa.");
+            this.flagUserConnectedWithUser = true;
+          }
+          this.getLastUbication(res[0]["uid"]);
+        } else {
+          this.createAlert(
+            "Error",
+            "No se pudo encontrar el usuario, ingrese de nuevo el id."
+          );
         }
-        this.getLastUbication(res[0]["uid"]);
-      } else {
-        this.createAlert("Error", "No se pudo encontrar el usuario, ingrese de nuevo el id.");
-      }
-    });
+      });
   }
 
   getGeoCodefromGoogleAPI(address: string): Observable<any> {
-    var URL_API_GEOCODE = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
-    var GOOGLE_KEY = '&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU';
+    var URL_API_GEOCODE =
+      "https://maps.googleapis.com/maps/api/geocode/json?address=";
+    var GOOGLE_KEY = "&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU";
     return this._http.get(`${URL_API_GEOCODE}${address}${GOOGLE_KEY}`);
   }
 
@@ -198,7 +218,7 @@ export class HomePage {
     var marker = new google.maps.Marker({
       position: this.userActualPosition,
       map: map,
-      icon: this.getMarketIcon("ubication")
+      icon: this.getMarketIcon("ubication"),
     });
 
     this.userMarker = marker;
@@ -211,7 +231,7 @@ export class HomePage {
     var marker = new google.maps.Marker({
       position: this.shareUser,
       map: map,
-      icon: this.getMarketIcon("ubication")
+      icon: this.getMarketIcon("ubication"),
     });
 
     this.shareUbicationMarker = marker;
@@ -223,7 +243,7 @@ export class HomePage {
 
     var marker = new google.maps.Marker({
       position: latLng,
-      map: map
+      map: map,
     });
 
     this.destinationMarker = marker;
@@ -244,14 +264,14 @@ export class HomePage {
     var marker = new google.maps.Marker({
       position: location.getLatLng(),
       map: map,
-      icon: urlIcon
+      icon: urlIcon,
     });
 
     var infowindow = new google.maps.InfoWindow({
-      content: contentCard
+      content: contentCard,
     });
 
-    marker.addListener('click', function () {
+    marker.addListener("click", function () {
       infowindow.open(map, marker);
       marker.setAnimation(google.maps.Animation.BOUNCE);
       setTimeout(marker.setAnimation(null), TIME_STOP_ANIMATION);
@@ -267,7 +287,7 @@ export class HomePage {
   }
 
   loadIndicatorsFromCoords({ lat, lng }) {
-    this.getAddresFromCoordsApi(lat, lng).subscribe(addressData => {
+    this.getAddresFromCoordsApi(lat, lng).subscribe((addressData) => {
       var locationCity = this.getInfoAddressFormCoords(addressData);
       if (locationCity.isLocationCityDefined()) {
         this.loadCityZones(locationCity);
@@ -276,7 +296,9 @@ export class HomePage {
   }
 
   getAddresFromCoordsApi(lat, lng): Observable<any> {
-    return this._http.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyDzQIvZVyTi7pfm2sIg4u81vmqGx4SBF3c`);
+    return this._http.get(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyDzQIvZVyTi7pfm2sIg4u81vmqGx4SBF3c`
+    );
   }
 
   getInfoAddressFormCoords(addressData) {
@@ -289,6 +311,7 @@ export class HomePage {
   }
 
   getResponseAddressFromCoords(addressData) {
+<<<<<<< HEAD
     var address = addressData["plus_code"]["compound_code"];        
     var addressArray = address.split(",");
     addressArray[0] = this.removeCodeCity(addressArray[0]);
@@ -300,32 +323,42 @@ export class HomePage {
     city = city.split(" ");
     city.shift();
     return city.join(" ");
+=======
+    var coords = addressData["results"];
+    return coords[coords.length - 3]["formatted_address"].split(",");
+>>>>>>> formatting docs
   }
 
   async loadCityZones(locationCity: LocationCity) {
-    this.storage.get(this.KEY_COUNTRY_DATA)
-      .then((res) => {
-        if (res) {
-          this.countryInfo = new Country(res.country, res.departments);
-          this.findCityToLoad(locationCity);
-        } else {
-          this.getCountryDataFirebase(locationCity);
-        }
-      });
+    this.storage.get(this.KEY_COUNTRY_DATA).then((res) => {
+      if (res) {
+        this.countryInfo = new Country(res.country, res.departments);
+        this.findCityToLoad(locationCity);
+      } else {
+        this.getCountryDataFirebase(locationCity);
+      }
+    });
   }
 
   async getCountryDataFirebase(locationCity: LocationCity) {
-    this.af.list("/").valueChanges().subscribe(val => {
-      this.countryInfo = new Country(val[0], val[1]);
-      this.saveCountryData();
-      this.findCityToLoad(locationCity);
-    });
+    this.af
+      .list("/")
+      .valueChanges()
+      .subscribe((val) => {
+        this.countryInfo = new Country(val[0], val[1]);
+        this.saveCountryData();
+        this.findCityToLoad(locationCity);
+      });
   }
 
   findCityToLoad(locationCity: LocationCity) {
     var departments: Department[] = this.countryInfo.departments;
-    var departmentToLoad = departments.find(department => this.compareStrings(department.department, locationCity.getDepartment()));
-    var cityToLoad = departmentToLoad.cities.find(city => this.compareStrings(city.city, locationCity.getCity()));
+    var departmentToLoad = departments.find((department) =>
+      this.compareStrings(department.department, locationCity.getDepartment())
+    );
+    var cityToLoad = departmentToLoad.cities.find((city) =>
+      this.compareStrings(city.city, locationCity.getCity())
+    );
     if (cityToLoad) {
       this.loadLocalities(cityToLoad.locations, locationCity);
       this.localitiesLoaded.push(locationCity.getStringAddress());
@@ -335,7 +368,10 @@ export class HomePage {
   getNearestLocationToUser() {
     var nearMarker = this.getNearestLocation(this.arrayMarkers);
     if (nearMarker) {
-      this.createLineBetweenUserMarker(nearMarker.coords, this.userActualPosition);
+      this.createLineBetweenUserMarker(
+        nearMarker.coords,
+        this.userActualPosition
+      );
       this.updateRiskMessages(nearMarker);
       this.showAlertCard(nearMarker);
     }
@@ -346,7 +382,10 @@ export class HomePage {
     var nearMarker = null;
 
     for (var marker of arrayMarkers) {
-      var distanceBetweenUserMarker = this.calculateDistance(marker.coords, this.userActualPosition);
+      var distanceBetweenUserMarker = this.calculateDistance(
+        marker.coords,
+        this.userActualPosition
+      );
       if (nearDistance == null || nearDistance > distanceBetweenUserMarker) {
         nearDistance = distanceBetweenUserMarker;
         nearMarker = marker;
@@ -357,12 +396,22 @@ export class HomePage {
   }
 
   showAlertCard(nearMarker) {
-    if (this.canShowAlert() && nearMarker.theftId == 1 && !this.isSharingLocation && this.askAlertAgain()) {
+    if (
+      this.canShowAlert() &&
+      nearMarker.theftId == 1 &&
+      !this.isSharingLocation &&
+      this.askAlertAgain()
+    ) {
       this.isShowingMessage = true;
       this.notifyAlert();
     }
 
-    if (this.canShowAlert() && nearMarker.theftId != 1 && this.isSharingLocation && this.askSafeAgain()) {
+    if (
+      this.canShowAlert() &&
+      nearMarker.theftId != 1 &&
+      this.isSharingLocation &&
+      this.askSafeAgain()
+    ) {
       this.isShowingMessage = true;
       this.notifySafe();
     }
@@ -378,14 +427,20 @@ export class HomePage {
     if (nearMarker.theftId != "") {
       var infoTheft = this.getRiskMessage(nearMarker.theftId, "theft");
       this.userTheftZone = infoTheft[0];
-      (<HTMLInputElement>document.getElementById("indicatorTheft")).className = infoTheft[1];
+      (<HTMLInputElement>document.getElementById("indicatorTheft")).className =
+        infoTheft[1];
       this.displayElement("indicatorTheft", "inline");
     }
 
     if (nearMarker.terrorismId != "") {
-      var infoTerrorism = this.getRiskMessage(nearMarker.terrorismId, "terrorism");
+      var infoTerrorism = this.getRiskMessage(
+        nearMarker.terrorismId,
+        "terrorism"
+      );
       this.userTerrorismZone = infoTerrorism[0];
-      (<HTMLInputElement>document.getElementById("indicatorTerrorism")).className = infoTerrorism[1];
+      (<HTMLInputElement>(
+        document.getElementById("indicatorTerrorism")
+      )).className = infoTerrorism[1];
       this.displayElement("indicatorTerrorism", "inline");
     }
   }
@@ -400,7 +455,7 @@ export class HomePage {
   createLineBetweenUserMarker(nearMarker, userPosition) {
     var path = [
       { lat: parseFloat(nearMarker.lat), lng: parseFloat(nearMarker.lng) },
-      { lat: parseFloat(userPosition.lat), lng: parseFloat(userPosition.lng) }
+      { lat: parseFloat(userPosition.lat), lng: parseFloat(userPosition.lng) },
     ];
     this.createLineBetweenPoints(path);
   }
@@ -409,14 +464,19 @@ export class HomePage {
     var i = 1;
 
     if (this.isSharingLocation) {
-      this.firebaseService.saveNewUbication(JSON.stringify(this.userActualPosition), this.uid);
+      this.firebaseService.saveNewUbication(
+        JSON.stringify(this.userActualPosition),
+        this.uid
+      );
     } // The interval only starts after 5 seconds.
     var interval = setInterval(() => {
       if (!this.isSharingLocation || i == 20) {
         clearInterval(interval);
-      }
-      else {
-        this.firebaseService.saveNewUbication(JSON.stringify(this.userActualPosition), this.uid);
+      } else {
+        this.firebaseService.saveNewUbication(
+          JSON.stringify(this.userActualPosition),
+          this.uid
+        );
       }
     }, 5000);
   }
@@ -434,9 +494,9 @@ export class HomePage {
 
   createLineBetweenPoints(path) {
     var lineSymbol = {
-      path: 'M 0,-1 0,1',
+      path: "M 0,-1 0,1",
       strokeOpacity: 1,
-      scale: 2
+      scale: 2,
     };
 
     if (this.line) {
@@ -446,18 +506,24 @@ export class HomePage {
       path,
       strokeColor: "#ff1a1a",
       strokeOpacity: 0,
-      icons: [{
-        icon: lineSymbol,
-        offset: '0',
-        repeat: '20px'
-      }],
-      map: this.map
+      icons: [
+        {
+          icon: lineSymbol,
+          offset: "0",
+          repeat: "20px",
+        },
+      ],
+      map: this.map,
     });
     this.line = line;
   }
 
   userHasChangePosition(latLng) {
-    return this.lastTrackUbication == null || latLng.lat != this.lastTrackUbication["lat"] || latLng.long != this.lastTrackUbication["lng"];
+    return (
+      this.lastTrackUbication == null ||
+      latLng.lat != this.lastTrackUbication["lat"] ||
+      latLng.long != this.lastTrackUbication["lng"]
+    );
   }
 
   askAlertAgain() {
@@ -474,7 +540,7 @@ export class HomePage {
     }
     var actualDate = new Date();
     var minutes = actualDate.getTime() - date.getTime();
-    minutes /= (1000 * 60);
+    minutes /= 1000 * 60;
     if (minutes >= 5) {
       return true;
     }
@@ -491,16 +557,15 @@ export class HomePage {
 
   getLastUbication(uid) {
     var userRef = this.db.collection("/users").doc(uid);
-    userRef.valueChanges()
-      .subscribe(res => {
-        if (res && res["ubication"]) {
-          this.showLastUserShareUbication(res["ubication"]);
-        }
-      });
+    userRef.valueChanges().subscribe((res) => {
+      if (res && res["ubication"]) {
+        this.showLastUserShareUbication(res["ubication"]);
+      }
+    });
   }
 
   getUid() {
-    this.storage.get('uid').then((val) => {
+    this.storage.get("uid").then((val) => {
       if (val != null && val != "") {
         this.uid = val;
         this.generateId();
@@ -508,7 +573,10 @@ export class HomePage {
     });
   }
 
-  async loadLocalities(locationsToLoad: Location[], locationCity: LocationCity) {
+  async loadLocalities(
+    locationsToLoad: Location[],
+    locationCity: LocationCity
+  ) {
     for (var location of locationsToLoad) {
       if (location && !this.isNullOrEmpty(location.location)) {
         this.createIndicator(location, locationCity);
@@ -521,7 +589,9 @@ export class HomePage {
 
   createIndicator(location: Location, locationCity: LocationCity) {
     var LOCATION_NOT_FINDED = "ZERO_RESULTS";
-    var addressToSearch = `${locationCity.getStringAddress()} ${location.location}`;
+    var addressToSearch = `${locationCity.getStringAddress()} ${
+      location.location
+    }`;
 
     if (!location.googleCanFindLocation()) {
       return;
@@ -529,24 +599,23 @@ export class HomePage {
 
     if (location.isLatLongDefined()) {
       this.createLocationIndicator(location);
+      return;
     }
-    else {
-      this.getGeoCodefromGoogleAPI(addressToSearch).subscribe(addressData => {
 
-        if (addressData.status == LOCATION_NOT_FINDED) {
-          location.lat = "none"; // do not search again
-          location.lng = "none";
-          return;
-        }
+    this.getGeoCodefromGoogleAPI(addressToSearch).subscribe((addressData) => {
+      if (addressData.status == LOCATION_NOT_FINDED) {
+        location.lat = "none"; // do not search again
+        location.lng = "none";
+        return;
+      }
 
-        if (addressData && addressData.results[0]) {
-          let lat: string = addressData.results[0].geometry.location.lat;
-          let lng: string = addressData.results[0].geometry.location.lng;
-          location.setLatLng(lat, lng);
-          this.createLocationIndicator(location);
-        }
-      });
-    }
+      if (addressData && addressData.results[0]) {
+        let lat: string = addressData.results[0].geometry.location.lat;
+        let lng: string = addressData.results[0].geometry.location.lng;
+        location.setLatLng(lat, lng);
+        this.createLocationIndicator(location);
+      }
+    });
   }
 
   createLocationIndicator(location: Location) {
@@ -565,65 +634,99 @@ export class HomePage {
       fillOpacity: 0,
       map: map,
       center: location.getLatLng(),
-      radius: 70
+      radius: 70,
     });
   }
 
   createTheftCircle(location: Location, map) {
     new google.maps.Circle({
-      strokeColor: '#DAD7D6',
+      strokeColor: "#DAD7D6",
       strokeOpacity: 0.8,
       strokeWeight: 1,
       fillColor: this.getColor(location.theftId, "theft"),
       fillOpacity: 0.35,
       map: map,
       center: location.getLatLng(),
-      radius: 70
+      radius: 70,
     });
   }
 
   createContentCard(location: Location) {
     var contentCard = '<div id=content">';
-    contentCard += ('<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">' + location.location + '</h1>');
-    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>' + this.getTypeIndex(location.theftId) + '</div>');
-    contentCard += ('<div id="bodyContent"> <strong>Número de hurtos: </strong>' + location.theftRating + '</div>');
-    contentCard += ('<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>' + this.getTypeIndex(location.terrorismId) + '</div>');
-    contentCard += ('<div id="bodyContent"> <strong>Número de atentados: </strong>' + location.terrorismRating + '</div>');
-    contentCard += '</div>';
+    contentCard +=
+      '<h1 style = "font-size: 18px; font-family: Cambria; margin-top: 6px">' +
+      location.location +
+      "</h1>";
+    contentCard +=
+      '<div id="bodyContent"> <strong>Nivel de riesgo hurto: </strong>' +
+      this.getTypeIndex(location.theftId) +
+      "</div>";
+    contentCard +=
+      '<div id="bodyContent"> <strong>Número de hurtos: </strong>' +
+      location.theftRating +
+      "</div>";
+    contentCard +=
+      '<div id="bodyContent"> <strong>Nivel de riesgo terrorismo: </strong>' +
+      this.getTypeIndex(location.terrorismId) +
+      "</div>";
+    contentCard +=
+      '<div id="bodyContent"> <strong>Número de atentados: </strong>' +
+      location.terrorismRating +
+      "</div>";
+    contentCard += "</div>";
     return contentCard;
   }
 
   calculateDistance(point1, point2) {
-    return Math.sqrt(Math.pow(point1.lat - point2.lat, 2) + Math.pow(point1.lng - point2.lng, 2))
+    return Math.sqrt(
+      Math.pow(point1.lat - point2.lat, 2) +
+        Math.pow(point1.lng - point2.lng, 2)
+    );
   }
 
-  createLatLngObj(latArg, lngArg) { return { lat: Number(latArg), lng: Number(lngArg) }; }
+  createLatLngObj(latArg, lngArg) {
+    return { lat: Number(latArg), lng: Number(lngArg) };
+  }
 
-  compareStrings(var1, var2) { return this.removeAccents(var1) == this.removeAccents(var2) }
+  compareStrings(var1, var2) {
+    return this.removeAccents(var1) == this.removeAccents(var2);
+  }
 
-  removeAccents(str) { return str.toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") }
+  removeAccents(str) {
+    return str
+      .toUpperCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
 
-  getTypeIndex(index) { return ['Nulo', 'Alto', 'Medio', 'Bajo'][index]; }
+  getTypeIndex(index) {
+    return ["Nulo", "Alto", "Medio", "Bajo"][index];
+  }
 
-  isNullOrEmpty(val) { return (val == null || (val !== 0 && val === "")); }
+  isNullOrEmpty(val) {
+    return val == null || (val !== 0 && val === "");
+  }
 
-  displayElement(element, type) { (<HTMLInputElement>document.getElementById(element)).style.display = type; }
+  displayElement(element, type) {
+    (<HTMLInputElement>document.getElementById(element)).style.display = type;
+  }
 
   getMarketIcon(indicator) {
-    indicator = String(indicator)
+    indicator = String(indicator);
     switch (indicator) {
       case "3":
-        return '../../assets/icon/green-dot.png';
+        return "../../assets/icon/green-dot.png";
       case "2":
-        return '../../assets/icon/yellow-dot.png';
+        return "../../assets/icon/yellow-dot.png";
       case "1":
-        return '../../assets/icon/red-dot.png';
+        return "../../assets/icon/red-dot.png";
       case "user":
-        return '../../assets/icon/user.png';
+        return "../../assets/icon/user.png";
       case "ubication":
-        return '../../assets/icon/man.png';
+        return "../../assets/icon/man.png";
       default:
-        return '../../assets/icon/blue-dot.png';
+        return "../../assets/icon/blue-dot.png";
     }
   }
 
@@ -632,30 +735,32 @@ export class HomePage {
     if (type == "theft") {
       switch (indicator) {
         case "3":
-          return ['Riesgo hurto: bajo', 'lowTheftRisk'];
+          return ["Riesgo hurto: bajo", "lowTheftRisk"];
         case "2":
-          return ['Riesgo hurto: medio', 'mediumTheftRisk'];
+          return ["Riesgo hurto: medio", "mediumTheftRisk"];
         case "1":
-          return ['Riesgo hurto: alto', 'highTheftRisk'];
+          return ["Riesgo hurto: alto", "highTheftRisk"];
       }
     } else {
       switch (indicator) {
         case "3":
-          return ['Riesgo terrorismo: bajo', 'lowTerrorismRisk'];
+          return ["Riesgo terrorismo: bajo", "lowTerrorismRisk"];
         case "1":
-          return ['Riesgo terrorismo: alto', 'highTerrorismRisk'];
+          return ["Riesgo terrorismo: alto", "highTerrorismRisk"];
       }
     }
   }
 
   getColor(indicator, key) {
     indicator -= 1;
-    return (key == "theft" ? ['red', 'yellow', 'green'][indicator] : ['black', '', '#8393F1'][indicator]);
+    return key == "theft"
+      ? ["red", "yellow", "green"][indicator]
+      : ["black", "", "#8393F1"][indicator];
   }
 
   generateId() {
-    var result = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var result = "";
+    var characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     var charactersLength = characters.length;
     for (var i = 0; i < 5; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -669,57 +774,60 @@ export class HomePage {
 
   async showInputIdUser() {
     const alert = await this.alertController.create({
-      header: 'Ver ubicacion',
+      header: "Ver ubicacion",
       inputs: [
         {
-          name: 'id',
-          placeholder: 'Id del usuario que desea ver.'
-        }
+          name: "id",
+          placeholder: "Id del usuario que desea ver.",
+        },
       ],
       buttons: [
         {
-          text: 'Cancelar',
-          role: 'cancel'
+          text: "Cancelar",
+          role: "cancel",
         },
         {
-          text: 'Conectar',
-          handler: data => {
+          text: "Conectar",
+          handler: (data) => {
             this.confirmId(data.id);
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
 
   async notifySafe() {
     const alert = await this.alertController.create({
-      header: '¡Sugerencia!',
-      message: 'Estás entrando en una zona de bajo riesgo. <br/><br/>¿Deseas continuar compartiendo tu ubicación?',
+      header: "¡Sugerencia!",
+      message:
+        "Estás entrando en una zona de bajo riesgo. <br/><br/>¿Deseas continuar compartiendo tu ubicación?",
       buttons: [
         {
-          text: 'Si',
-          cssClass: 'primary',
+          text: "Si",
+          cssClass: "primary",
           handler: () => {
             this.lastSafe = new Date();
             this.isShowingMessage = false;
-          }
-        }, {
-          text: 'No',
+          },
+        },
+        {
+          text: "No",
           handler: () => {
             // sleep()
             this.isShowingMessage = false;
             this.isSharingLocation = false;
-          }
-        }, {
-          text: 'No preguntar de nuevo',
+          },
+        },
+        {
+          text: "No preguntar de nuevo",
           handler: () => {
             // sleep()
             this.isShowingMessage = false;
             this.dontAskAgain = true;
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
 
     await alert.present();
@@ -731,12 +839,11 @@ export class HomePage {
       message: body,
       buttons: [
         {
-          text: 'Aceptar',
-          cssClass: 'primary',
-          handler: () => {
-          }
-        }
-      ]
+          text: "Aceptar",
+          cssClass: "primary",
+          handler: () => {},
+        },
+      ],
     });
 
     await alert.present();
@@ -744,32 +851,35 @@ export class HomePage {
 
   async notifyAlert() {
     const alert = await this.alertController.create({
-      header: '¡Precaución!',
-      message: 'Estás entrando en una zona riesgosa. <br/><br/>¿Deseas compartir tu ubicación?',
+      header: "¡Precaución!",
+      message:
+        "Estás entrando en una zona riesgosa. <br/><br/>¿Deseas compartir tu ubicación?",
       buttons: [
         {
-          text: 'Si',
-          cssClass: 'primary',
+          text: "Si",
+          cssClass: "primary",
           handler: () => {
             this.isSharingLocation = true;
             this.isShowingMessage = false;
             this.shareUbication();
-          }
-        }, {
-          text: 'No',
+          },
+        },
+        {
+          text: "No",
           handler: () => {
             this.isShowingMessage = false;
             this.lastAlert = new Date();
-          }
-        }, {
-          text: 'No preguntar de nuevo',
+          },
+        },
+        {
+          text: "No preguntar de nuevo",
           handler: () => {
             // sleep()
             this.dontAskAgain = true;
             this.isShowingMessage = false;
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
 
     await alert.present();
