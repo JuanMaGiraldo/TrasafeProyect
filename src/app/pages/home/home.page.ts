@@ -1,18 +1,17 @@
 import { Component, ViewChild, ElementRef } from "@angular/core";
 import { Geolocation } from "@ionic-native/geolocation/ngx";
-import { Marker } from "../models/marker";
+import { Marker } from "../../models/marker";
 import { AlertController } from "@ionic/angular";
-import { FirebaseServiceService } from "../services/firebase-service.service";
+import { FirebaseServiceService } from "../../services/firebase-service.service";
 import { AngularFirestore } from "@angular/fire/firestore";
-import { AuthenticationService } from "../services/authentication.service";
+import { AuthenticationService } from "../../services/authentication.service";
+import { MapService } from "../../services/map.service";
 import { Subscription } from "rxjs";
 import { filter } from "rxjs/operators";
 import { Storage } from "@ionic/storage";
 import { AngularFireDatabase } from "@angular/fire/database";
-import { Country, Department, City, Location } from "../models/country";
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
-import { LocationCity } from "../models/locationCity";
+import { Country, Department, City, Location } from "../../models/country";
+import { LocationCity } from "../../models/locationCity";
 
 declare var google;
 
@@ -66,7 +65,7 @@ export class HomePage {
     private db: AngularFirestore,
     private af: AngularFireDatabase,
     private storage: Storage,
-    private _http: HttpClient
+    private mapService: MapService
   ) {
     this.mapOptions = {
       zoom: 17,
@@ -131,13 +130,15 @@ export class HomePage {
   searchInfoPlace() {
     var placeToSearch = this.getUserSearchPlace();
     if (placeToSearch) {
-      this.getGeoCodefromGoogleAPI(placeToSearch).subscribe((addressData) => {
-        var location = addressData.results[0].geometry.location;
-        var latLng = this.createLatLngObj(location.lat, location.lng);
-        this.centerMap(latLng);
-        this.updateDestinationMarker(latLng);
-        this.loadIndicatorsFromCoords(latLng);
-      });
+      this.mapService
+        .getCoordsFromAddressApi(placeToSearch)
+        .subscribe((addressData) => {
+          var location = addressData.results[0].geometry.location;
+          var latLng = this.createLatLngObj(location.lat, location.lng);
+          this.centerMap(latLng);
+          this.updateDestinationMarker(latLng);
+          this.loadIndicatorsFromCoords(latLng);
+        });
     }
   }
 
@@ -197,13 +198,6 @@ export class HomePage {
           );
         }
       });
-  }
-
-  getGeoCodefromGoogleAPI(address: string): Observable<any> {
-    var URL_API_GEOCODE =
-      "https://maps.googleapis.com/maps/api/geocode/json?address=";
-    var GOOGLE_KEY = "&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU";
-    return this._http.get(`${URL_API_GEOCODE}${address}${GOOGLE_KEY}`);
   }
 
   updateUserMarker() {
@@ -282,23 +276,18 @@ export class HomePage {
   }
 
   loadIndicatorsFromCoords({ lat, lng }) {
-    this.getAddresFromCoordsApi(lat, lng).subscribe((addressData) => {
-      var locationCity = this.getInfoAddressFormCoords(addressData);
-      if (locationCity.isLocationCityDefined()) {
-        this.loadCityZones(locationCity);
-      }
-    });
-  }
-
-  getAddresFromCoordsApi(lat, lng): Observable<any> {
-    return this._http.get(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyDzQIvZVyTi7pfm2sIg4u81vmqGx4SBF3c`
-    );
+    this.mapService
+      .getAddressFromCoordsApi(lat, lng)
+      .subscribe((addressData) => {
+        var locationCity = this.getInfoAddressFormCoords(addressData);
+        if (locationCity.isLocationCityDefined()) {
+          this.loadCityZones(locationCity);
+        }
+      });
   }
 
   getInfoAddressFormCoords(addressData) {
     var arrayInfo = this.getResponseAddressFromCoords(addressData);
-
     var locationCity = new LocationCity();
     locationCity.setCountry(arrayInfo[2]);
     locationCity.setDepartment(arrayInfo[1]);
@@ -308,6 +297,7 @@ export class HomePage {
 
   getResponseAddressFromCoords(addressData) {
     var coords = addressData["results"];
+    console.log(coords);
     for (let coord in coords) {
       let addreess = coords[coord];
       if (addreess["address_components"].length == 3) {
@@ -589,20 +579,22 @@ export class HomePage {
       return;
     }
 
-    this.getGeoCodefromGoogleAPI(addressToSearch).subscribe((addressData) => {
-      if (addressData.status == LOCATION_NOT_FINDED) {
-        location.lat = "none"; // do not search again
-        location.lng = "none";
-        return;
-      }
+    this.mapService
+      .getCoordsFromAddressApi(addressToSearch)
+      .subscribe((addressData) => {
+        if (addressData.status == LOCATION_NOT_FINDED) {
+          location.lat = "none"; // do not search again
+          location.lng = "none";
+          return;
+        }
 
-      if (addressData && addressData.results[0]) {
-        let lat: string = addressData.results[0].geometry.location.lat;
-        let lng: string = addressData.results[0].geometry.location.lng;
-        location.setLatLng(lat, lng);
-        this.createLocationIndicator(location);
-      }
-    });
+        if (addressData && addressData.results[0]) {
+          let lat: string = addressData.results[0].geometry.location.lat;
+          let lng: string = addressData.results[0].geometry.location.lng;
+          location.setLatLng(lat, lng);
+          this.createLocationIndicator(location);
+        }
+      });
   }
 
   createLocationIndicator(location: Location) {

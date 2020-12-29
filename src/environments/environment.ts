@@ -12,15 +12,9 @@ export const environment = {
     storageBucket: "trasafe-cd4a5.appspot.com",
     messagingSenderId: "8878540390",
     appId: "1:8878540390:web:7a95d9290e9be4882dcfa7",
-    measurementId: "G-7NBGL3BR2Y"
-  }
+    measurementId: "G-7NBGL3BR2Y",
+  },
+  maps_api: {
+    apiKey: "&key=AIzaSyAkTrr49hjEGTLdeAMWsun55vLhXs1OWJU",
+  },
 };
-
-/*
- * For easier debugging in development mode, you can import the following file
- * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.
- *
- * This import should be commented out in production mode because it will have a negative impact
- * on performance if an error is thrown.
- */
-// import 'zone.js/dist/zone-error';  // Included with Angular CLI.
