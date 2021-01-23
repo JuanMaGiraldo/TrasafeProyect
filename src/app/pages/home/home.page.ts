@@ -44,7 +44,6 @@ export class HomePage {
   isShowingMessage: boolean;
   locations: any;
   arrayLocalities: any[];
-  localitiesLoaded: string[];
   uid: string = "";
   idUser: string = "";
   idUserShow: string = "";
@@ -56,6 +55,7 @@ export class HomePage {
   userMarker: any;
   destinationMarker: any;
   shareUbicationMarker: any;
+  loadedLocations: string[] = [];
 
   constructor(
     private geolocation: Geolocation,
@@ -81,7 +81,6 @@ export class HomePage {
     this.srcIndicator = "";
     this.userActualPosition = null;
     this.trackingUbication = "";
-    this.localitiesLoaded = [];
     this.locationsToUpdate = new Array();
     this.getUid();
   }
@@ -144,7 +143,7 @@ export class HomePage {
 
   getUserSearchPlace() {
     return this.searchBox
-      ? this.searchBox.gm_accessors_.places.qe.formattedPrediction
+      ? this.searchBox.gm_accessors_.places.Ee.formattedPrediction
       : "";
   }
 
@@ -207,7 +206,7 @@ export class HomePage {
     var marker = new google.maps.Marker({
       position: this.userActualPosition,
       map: map,
-      icon: this.getMarketIcon("ubication"),
+      icon: this.getMarketIcon("user"),
     });
 
     this.userMarker = marker;
@@ -280,13 +279,16 @@ export class HomePage {
       .getAddressFromCoordsApi(lat, lng)
       .subscribe((addressData) => {
         var locationCity = this.getInfoAddressFormCoords(addressData);
-        if (locationCity.isLocationCityDefined()) {
+        if (
+          locationCity.isLocationCityDefined() &&
+          !this.loadedLocations.includes(locationCity.getStringAddress())
+        ) {
           this.loadCityZones(locationCity);
         }
       });
   }
 
-  getInfoAddressFormCoords(addressData) {
+  getInfoAddressFormCoords(addressData): LocationCity {
     var arrayInfo = this.getResponseAddressFromCoords(addressData);
     var locationCity = new LocationCity();
     locationCity.setCountry(arrayInfo[2]);
@@ -297,7 +299,6 @@ export class HomePage {
 
   getResponseAddressFromCoords(addressData) {
     var coords = addressData["results"];
-    console.log(coords);
     for (let coord in coords) {
       let addreess = coords[coord];
       if (addreess["address_components"].length == 3) {
@@ -338,7 +339,7 @@ export class HomePage {
     );
     if (cityToLoad) {
       this.loadLocalities(cityToLoad.locations, locationCity);
-      this.localitiesLoaded.push(locationCity.getStringAddress());
+      this.loadedLocations.push(locationCity.getStringAddress());
     }
   }
 
@@ -545,7 +546,6 @@ export class HomePage {
     this.storage.get("uid").then((val) => {
       if (val != null && val != "") {
         this.uid = val;
-        this.generateId();
       }
     });
   }
@@ -554,6 +554,10 @@ export class HomePage {
     locationsToLoad: Location[],
     locationCity: LocationCity
   ) {
+    locationsToLoad = locationsToLoad.sort(
+      (a, b) => parseInt(b.theftId) - parseInt(a.theftId)
+    );
+    console.log(locationsToLoad);
     for (var location of locationsToLoad) {
       if (location && !this.isNullOrEmpty(location.location)) {
         this.createIndicator(location, locationCity);
@@ -563,7 +567,6 @@ export class HomePage {
       this.saveCountryData();
     }, 3000);
   }
-
   createIndicator(location: Location, locationCity: LocationCity) {
     var LOCATION_NOT_FINDED = "ZERO_RESULTS";
     var addressToSearch = `${locationCity.getStringAddress()} ${
@@ -701,9 +704,11 @@ export class HomePage {
       case "1":
         return "../../assets/icon/red-dot.png";
       case "user":
-        return "../../assets/icon/user.png";
-      case "ubication":
         return "../../assets/icon/man.png";
+      case "ubication":
+        return "../../assets/icon/share-user.png";
+      case "stop-ubication":
+        return "../../assets/icon/noshare-user.png";
       default:
         return "../../assets/icon/blue-dot.png";
     }
@@ -735,6 +740,14 @@ export class HomePage {
     return key == "theft"
       ? ["red", "yellow", "green"][indicator]
       : ["black", "", "#8393F1"][indicator];
+  }
+
+  createIdUser() {
+    (<HTMLInputElement>document.getElementById("button_share_id")).className =
+      "hide-element";
+    (<HTMLInputElement>document.getElementById("div_id_user")).className =
+      "div_id_user";
+    this.generateId();
   }
 
   generateId() {

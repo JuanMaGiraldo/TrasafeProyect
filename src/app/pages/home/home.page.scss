@@ -9,31 +9,31 @@
   font-size: 18px;
   font-weight: bold;
 }
- 
+
 #map {
   width: 100%;
   height: 55vh;
 }
 
-.header{
+.header {
   display: flex;
   justify-content: space-between;
   margin: 0;
 }
 
-.logo_title{
-  color: #254B96; 
-  font-family: 'Yellowtail', cursive; 
-  font-size: 31px;    
+.logo_title {
+  color: #254b96;
+  font-family: "Yellowtail", cursive;
+  font-size: 31px;
 }
 
-.button_where{
+.button_where {
   margin-right: 25px;
 }
 
 .map-wrapper {
   position: relative;
- 
+
   #map_center {
     position: absolute;
     z-index: 99;
@@ -45,8 +45,8 @@
     margin-top: -41px;
   }
 }
- 
-.alertImages{  
+
+.alertImages {
   height: 40px;
   width: 40px;
   margin-left: 20px;
@@ -58,7 +58,7 @@
   width: 36px;
   height: 36px;
   padding: 8px;
-  float:right;
+  float: right;
   background: gray;
   border: 2px solid #666;
   color: #666;
@@ -67,67 +67,72 @@
   font: 32px Arial, sans-serif;
 }
 
-.info-user{
-  -webkit-box-shadow: 0px -8px 12px -3px rgba(0,0,0,0.53); 
-  box-shadow: 0px -8px 12px -3px rgba(0,0,0,0.53);
+.info-user {
+  -webkit-box-shadow: 0px -8px 12px -3px rgba(0, 0, 0, 0.53);
+  box-shadow: 0px -8px 12px -3px rgba(0, 0, 0, 0.53);
   margin-top: 10px;
 }
 
-.share-location, .noshare-location{
+.share-location,
+.noshare-location {
   display: flex;
-  border-bottom: 0.1px solid rgb(190, 189, 189);  
+  border-bottom: 0.1px solid rgb(190, 189, 189);
   width: 100%;
   align-items: center;
   margin: 0 auto;
 }
 
-.share{
+.share {
   position: relative;
-  display: table-cell; 
+  display: table-cell;
   vertical-align: middle;
   margin-left: 0px;
   color: gray;
 }
 
-.lowTheftRisk{
+.lowTheftRisk {
   color: white;
   background-color: green;
 }
 
-.mediumTheftRisk{
-  color:black;
+.mediumTheftRisk {
+  color: black;
   background-color: yellow;
 }
 
-.highTheftRisk{
-  color:white;
+.highTheftRisk {
+  color: white;
   background-color: red;
 }
 
-.highTerrorismRisk{
-  color:white;
+.highTerrorismRisk {
+  color: white;
   background-color: black;
 }
 
-.lowTerrorismRisk{
+.lowTerrorismRisk {
   color: black;
-  background-color: #8393F1;  
+  background-color: #8393f1;
 }
 
-.highTheftRisk, .highTerrorismRisk, .mediumTheftRisk, .lowTheftRisk, .lowTerrorismRisk{
+.highTheftRisk,
+.highTerrorismRisk,
+.mediumTheftRisk,
+.lowTheftRisk,
+.lowTerrorismRisk {
   padding-left: 5px;
   padding-right: 5px;
   font-weight: bold;
 }
 
-.id_user{  
+.id_user {
   color: #5b6bc3;
-    font-size: 20px;
-    padding: 6px;
-    margin-top: 13px;
+  font-size: 20px;
+  padding: 6px;
+  margin-top: 13px;
 }
 
-.div_id_user{
+.div_id_user {
   border: 1px solid #5a5adf;
   border-radius: 8px;
   display: inline;
@@ -138,50 +143,52 @@
   margin-right: 10px;
 }
 
-
-#indicatorUbication{  
+#indicatorUbication {
   display: inline-block;
   margin-top: 5px;
   margin-bottom: 5px;
   padding: 5px;
 }
 
-.divUserZone{
+.divUserZone {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  overflow: hidden; 
+  overflow: hidden;
   text-align: center;
   padding-top: 5px;
   padding-bottom: 5px;
-  border-bottom: 0.1px solid rgb(190, 189, 189);  
+  border-bottom: 0.1px solid rgb(190, 189, 189);
 }
 
-.div_share_ubication{
+.div_share_ubication {
   display: block;
   align-items: center;
-  overflow: hidden; 
+  overflow: hidden;
   text-align: center;
   padding-top: 5px;
   padding-bottom: 5px;
 }
 
-
-.div-optios{
-  display:grid;
+.div-optios {
+  display: grid;
 }
 
-.icon-menu{
-  zoom:2.0;
+.hide-element {
+  display: none;
 }
 
-.headingCard{
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+.icon-menu {
+  zoom: 2;
+}
+
+.headingCard {
+  font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
   font-size: 8px;
 }
 
 #description {
-  font-family: Roboto,Arial, Verdana, Tahoma, sans-serif;
+  font-family: Roboto, Arial, Verdana, Tahoma, sans-serif;
   font-size: 15px;
   font-weight: 300;
 }
@@ -206,7 +213,7 @@
   outline: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   background-color: #fff;
-  font-family: Roboto,Arial, Verdana, Tahoma, sans-serif;
+  font-family: Roboto, Arial, Verdana, Tahoma, sans-serif;
 }
 
 #pac-container {
@@ -220,7 +227,7 @@
 }
 
 .pac-controls label {
-  font-family: Roboto,Arial, Verdana, Tahoma, sans-serif;
+  font-family: Roboto, Arial, Verdana, Tahoma, sans-serif;
   font-size: 13px;
   font-weight: 300;
 }
