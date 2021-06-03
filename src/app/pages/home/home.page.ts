@@ -132,7 +132,6 @@ export class HomePage {
             cont++;
           }
         }
-        console.log(completeAddress);
         this.searchInfoPlace(completeAddress);
       }
     });
@@ -169,7 +168,6 @@ export class HomePage {
   }
 
   getUserSearchPlace() {
-    console.log(this.searchBox.geometry);
     return this.searchBox
       ? this.searchBox.gm_accessors_.places.Ee.formattedPrediction
       : "";
@@ -585,20 +583,11 @@ export class HomePage {
     locationsToLoad = locationsToLoad.sort(
       (a, b) => parseInt(b.theftId) - parseInt(a.theftId)
     );
-    while (locationsToLoad.length > 0) {
-      let locationsMissing = [];
-      console.log("to load;", locationsToLoad);
 
-      for (var location of locationsToLoad) {
-        if (location && !this.isNullOrEmpty(location.location)) {
-          console.log(this.createIndicator(location, locationCity));
-          //if (this.createIndicator(location, locationCity) == false) {
-          //  locationsMissing.push(location);
-          //}
-        }
+    for (var location of locationsToLoad) {
+      if (location && !this.isNullOrEmpty(location.location)) {
+        this.createIndicator(location, locationCity);
       }
-      console.log(locationsMissing);
-      locationsToLoad = locationsMissing;
     }
 
     setTimeout(() => {
@@ -623,9 +612,7 @@ export class HomePage {
     this.mapService.getCoordsFromAddressApi(addressToSearch).subscribe(
       (addressData) => {
         if (addressData.status == this.OVER_QUERY_LIMIT) {
-          //(timeout with create indicator)
           setTimeout(() => {
-            console.log("call again");
             this.createIndicator(location, locationCity);
           }, 500);
           return false;
