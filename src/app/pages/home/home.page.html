@@ -32,9 +32,11 @@
       type="text"
       placeholder="Consulte y seleccione un lugar:"
     />
+    <!--
     <ion-button (click)="searchInfoPlace()" color="primary">
       <ion-icon name="search-circle-outline"></ion-icon>
     </ion-button>
+    -->
   </ion-item>
 
   <div class="map-wrapper">
@@ -44,7 +46,7 @@
   <div class="info-user">
     <div
       *ngIf="isSharingLocation"
-      class="share-location"
+      class="share-location div_share_location"
       (click)="shareLocationClick()"
     >
       <img
@@ -56,7 +58,7 @@
     </div>
     <div
       *ngIf="!isSharingLocation"
-      class="noshare-location"
+      class="noshare-location div_share_location"
       (click)="shareLocationClick()"
     >
       <img
@@ -64,7 +66,7 @@
         src="../../assets/icon/noshare-location.png"
         alt="no compartiendo ubicación"
       />
-      <span class="share">Compartir ubicación</span>
+      <span class="share"> Compartir ubicación</span>
     </div>
 
     <div class="divUserZone">

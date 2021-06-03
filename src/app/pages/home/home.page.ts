@@ -9,7 +9,7 @@ import { MapService } from "../../services/map.service";
 import { Subscription } from "rxjs";
 import { filter } from "rxjs/operators";
 import { Storage } from "@ionic/storage";
-import { AngularFireDatabase } from "@angular/fire/database";
+import { AngularFireDatabase, listChanges } from "@angular/fire/database";
 import { Country, Department, City, Location } from "../../models/country";
 import { LocationCity } from "../../models/locationCity";
 
@@ -24,6 +24,8 @@ export class HomePage {
   @ViewChild("map", { static: false }) mapElement: ElementRef;
   map: any;
   KEY_COUNTRY_DATA = "locationsArray";
+  LOCATION_NOT_FINDED = "ZERO_RESULTS";
+  OVER_QUERY_LIMIT = "OVER_QUERY_LIMIT";
   error: string = "";
   console: string = "";
   line: any;
@@ -106,8 +108,34 @@ export class HomePage {
   }
 
   initializeAutocompleteInput() {
-    var input = document.getElementById("pac-input");
-    this.searchBox = new google.maps.places.SearchBox(input);
+    var searchBox = new google.maps.places.Autocomplete(
+      document.getElementById("pac-input"),
+      {
+        componentRestrictions: { country: ["CO"] },
+        fields: ["address_components", "name"],
+      }
+    );
+
+    searchBox.addListener("place_changed", () => {
+      let place = searchBox.getPlace();
+      if (place) {
+        let completeAddress = "";
+        var addressComponents = place["address_components"];
+        for (
+          let i = addressComponents.length - 1, cont = 0;
+          i >= 0 && cont < 3;
+          i--
+        ) {
+          let name = addressComponents[i]["long_name"];
+          if (isNaN(name)) {
+            completeAddress += `${name} `;
+            cont++;
+          }
+        }
+        console.log(completeAddress);
+        this.searchInfoPlace(completeAddress);
+      }
+    });
   }
 
   loadInitInfoFromUserPosition() {
@@ -126,9 +154,8 @@ export class HomePage {
       });
   }
 
-  searchInfoPlace() {
-    var placeToSearch = this.getUserSearchPlace();
-    if (placeToSearch) {
+  searchInfoPlace(placeToSearch) {
+    if (placeToSearch && placeToSearch != "") {
       this.mapService
         .getCoordsFromAddressApi(placeToSearch)
         .subscribe((addressData) => {
@@ -142,6 +169,7 @@ export class HomePage {
   }
 
   getUserSearchPlace() {
+    console.log(this.searchBox.geometry);
     return this.searchBox
       ? this.searchBox.gm_accessors_.places.Ee.formattedPrediction
       : "";
@@ -557,38 +585,56 @@ export class HomePage {
     locationsToLoad = locationsToLoad.sort(
       (a, b) => parseInt(b.theftId) - parseInt(a.theftId)
     );
-    console.log(locationsToLoad);
-    for (var location of locationsToLoad) {
-      if (location && !this.isNullOrEmpty(location.location)) {
-        this.createIndicator(location, locationCity);
+    while (locationsToLoad.length > 0) {
+      let locationsMissing = [];
+      console.log("to load;", locationsToLoad);
+
+      for (var location of locationsToLoad) {
+        if (location && !this.isNullOrEmpty(location.location)) {
+          console.log(this.createIndicator(location, locationCity));
+          //if (this.createIndicator(location, locationCity) == false) {
+          //  locationsMissing.push(location);
+          //}
+        }
       }
+      console.log(locationsMissing);
+      locationsToLoad = locationsMissing;
     }
+
     setTimeout(() => {
       this.saveCountryData();
     }, 3000);
   }
+
   createIndicator(location: Location, locationCity: LocationCity) {
-    var LOCATION_NOT_FINDED = "ZERO_RESULTS";
     var addressToSearch = `${locationCity.getStringAddress()} ${
       location.location
     }`;
 
     if (!location.googleCanFindLocation()) {
-      return;
+      return true;
     }
 
     if (location.isLatLongDefined()) {
       this.createLocationIndicator(location);
-      return;
+      return true;
     }
 
-    this.mapService
-      .getCoordsFromAddressApi(addressToSearch)
-      .subscribe((addressData) => {
-        if (addressData.status == LOCATION_NOT_FINDED) {
+    this.mapService.getCoordsFromAddressApi(addressToSearch).subscribe(
+      (addressData) => {
+        if (addressData.status == this.OVER_QUERY_LIMIT) {
+          //(timeout with create indicator)
+          setTimeout(() => {
+            console.log("call again");
+            this.createIndicator(location, locationCity);
+          }, 500);
+          return false;
+        }
+
+        if (addressData.status == this.LOCATION_NOT_FINDED) {
           location.lat = "none"; // do not search again
           location.lng = "none";
-          return;
+          return true;
         }
 
         if (addressData && addressData.results[0]) {
@@ -597,7 +643,12 @@ export class HomePage {
           location.setLatLng(lat, lng);
           this.createLocationIndicator(location);
         }
-      });
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+    return true;
   }
 
   createLocationIndicator(location: Location) {
