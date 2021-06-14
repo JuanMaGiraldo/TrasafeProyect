@@ -17,10 +17,10 @@ declare var google;
 
 @Component({
   selector: "app-home",
-  templateUrl: "home.page.html",
-  styleUrls: ["home.page.scss"],
+  templateUrl: "map.page.html",
+  styleUrls: ["map.page.scss"],
 })
-export class HomePage {
+export class MapPage {
   @ViewChild("map", { static: false }) mapElement: ElementRef;
   map: any;
   KEY_COUNTRY_DATA = "locationsArray";
