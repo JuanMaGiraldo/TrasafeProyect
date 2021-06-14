@@ -1,19 +1,44 @@
 <ion-header>
   <ion-row>
     <ion-col text-start>
-      <ion-title style = "color: #254B96; font-family: 'Yellowtail', cursive; font-size: 31px;">Trasafe</ion-title>
+      <ion-title
+        style="
+          color: #254b96;
+          font-family: 'Yellowtail', cursive;
+          font-size: 31px;
+        "
+        >Trasafe</ion-title
+      >
     </ion-col>
     <ion-col text-end>
-      <div class="div_title"><span class = "titles_header">Opciones</span></div>
+      <div class="div_title"><span class="titles_header">Opciones</span></div>
     </ion-col>
   </ion-row>
 </ion-header>
 
 <ion-content>
-  <div class = "div_buttons">
-    <ion-button expand="block" (click)="showLastUbication()"><ion-icon name="navigate-outline"></ion-icon>Mostrar última ubicación</ion-button>
-    <ion-button expand="block" (click)="delete()" style = "display:none;"><ion-icon name="navigate-outline"></ion-icon>Borrar datos</ion-button>
-  <ion-button expand="block" color = "danger" (click)="closeSession()"><ion-icon name="close-circle-outline" style = "align-items: left;"></ion-icon>Cerrar sesión</ion-button>
-  </div>
-  
+  <ion-grid>
+    <ion-row class="ion-align-items-center">
+      <ion-col size="12" class="ion-text-center">
+        <ion-button (click)="showLastUbication()"
+          ><ion-icon name="navigate-outline"></ion-icon>Mostrar última
+          ubicación</ion-button
+        >
+      </ion-col>
+      <ion-col size="12" class="ion-text-center">
+        <ion-button color="danger" (click)="delete()"
+          ><ion-icon name="trash"></ion-icon>Borrar dataset</ion-button
+        >
+      </ion-col>
+      <ion-col size="12" class="ion-text-center">
+        <ion-button color="danger" (click)="closeSession()"
+          ><ion-icon
+            name="close-circle-outline"
+            style="align-items: left"
+          ></ion-icon
+          >Cerrar sesión</ion-button
+        >
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>
